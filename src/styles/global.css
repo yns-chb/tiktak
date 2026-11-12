@@ -1,0 +1,80 @@
+@import "tailwindcss";
+
+@plugin "daisyui" {
+    themes: tiktak --default;
+}
+
+@plugin "daisyui/theme" {
+    name: "tiktak";
+    default: true;
+    prefersdark: false;
+    color-scheme: light;
+
+    /* Fonds et texte */
+    --color-base-100: #F5F1E8;
+    /* ivoire : fond des pages */
+    --color-base-200: #EDE6D9;
+    /* fond légèrement plus soutenu */
+    --color-base-300: #E4DACB;
+    /* ligne : séparateurs, vitrines */
+    --color-base-content: #2B2320;
+    /* noir chaud : texte */
+
+    /* Couleurs de la marque */
+    --color-primary: #8D6A4A;
+    /* marron : Commander, Générer */
+    --color-primary-content: #FFFFFF;
+    --color-secondary: #2B2320;
+    /* noir : Suivant, Se connecter */
+    --color-secondary-content: #F5F1E8;
+    --color-accent: #D8C3A4;
+    /* sable : détails */
+    --color-accent-content: #2B2320;
+    --color-neutral: #BFA38B;
+    /* beige : bandeaux */
+    --color-neutral-content: #2B2320;
+
+    /* États */
+    --color-info: #3E5C76;
+    --color-info-content: #FFFFFF;
+    --color-success: #4F7A5A;
+    --color-success-content: #FFFFFF;
+    --color-warning: #C08A2E;
+    --color-warning-content: #2B2320;
+    --color-error: #A33A2B;
+    /* alerte : Supprimer */
+    --color-error-content: #FFFFFF;
+
+    /* Formes : angles presque droits, style épuré */
+    --radius-selector: 1rem;
+    --radius-field: 0.125rem;
+    --radius-box: 0.25rem;
+    --size-selector: 0.25rem;
+    --size-field: 0.25rem;
+    --border: 1px;
+    --depth: 0;
+    --noise: 0;
+}
+
+/* Polices de la maquette */
+@theme {
+    --font-sans: "Jost", sans-serif;
+    --font-serif: "Cormorant Garamond", Georgia, serif;
+}
+
+@layer base {
+
+    h1,
+    h2,
+    h3 {
+        font-family: var(--font-serif);
+        font-weight: 300;
+    }
+}
+
+
+.btn {
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+}

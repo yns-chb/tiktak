@@ -1,0 +1,74 @@
+---
+import MontreRonde from "./MontreRonde.astro";
+import { prixEuro } from "../lib/format";
+
+// Reprend LIGNE_DE_COMMANDE (quantite) et la montre commandée (MONTRE) : <LigneCommande {...ligne} />
+interface Props {
+  id_montre: number;
+  nom: string;
+  prix: number; // prix d'une montre
+  quantite: number;
+  svg?: string | null;
+  // true dans le panier : quantité modifiable, liens Modifier / Retirer
+  modifiable?: boolean;
+}
+
+const { id_montre, nom, prix, quantite, svg, modifiable = false } = Astro.props;
+---
+
+<div
+  class="flex flex-wrap items-center gap-4 py-4 sm:gap-6"
+  data-id-montre={id_montre}
+>
+  <div class="w-16 shrink-0 rounded-box bg-base-300 p-2 sm:w-20">
+    {svg ? <Fragment set:html={svg} /> : <MontreRonde />}
+  </div>
+
+  <div class="min-w-0 flex-1">
+    <p class="text-xs uppercase tracking-widest text-base-content/60">
+      Votre création
+    </p>
+    <h3 class="font-serif text-xl">{nom}</h3>
+    {
+      modifiable && (
+        <div class="mt-1 flex gap-4 text-sm">
+          <a href={`/montres/${id_montre}`} class="link link-primary">
+            Modifier
+          </a>
+          <button
+            type="button"
+            class="retirer link text-error"
+            data-id-montre={id_montre}
+          >
+            Supprimer
+          </button>
+        </div>
+      )
+    }
+  </div>
+
+  {
+    modifiable ? (
+      <input
+        type="number"
+        name={`quantite-${id_montre}`}
+        value={quantite}
+        min="1"
+        max="9"
+        class="quantite input input-bordered w-20"
+        aria-label={`Quantité de ${nom}`}
+      />
+    ) : (
+      <span class="text-sm text-base-content/70">× {quantite}</span>
+    )
+  }
+
+  <div class="text-right">
+    <p class="font-serif text-xl">{prixEuro(prix * quantite)}</p>
+    {
+      quantite > 1 && (
+        <p class="text-xs text-base-content/60">{prixEuro(prix)} l'unité</p>
+      )
+    }
+  </div>
+</div>

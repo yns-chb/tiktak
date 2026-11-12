@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 1366 768">
+  <defs>
+    <style>
+      .trait {
+        fill: #fff;
+        stroke: #000;
+        stroke-miterlimit: 10;
+        stroke-width: .5px;
+      }
+
+      .ecran-fond {
+        fill: #b3b3b3;
+        stroke: #000;
+        stroke-miterlimit: 10;
+        stroke-width: .5px;
+      }
+
+      .texte {
+        font-family: ArialMT, Arial;
+        text-anchor: middle;
+      }
+
+      .anneau-fond {
+        fill: none;
+        stroke: #8c8c8c;
+        stroke-width: 6px;
+      }
+
+      .anneau-valeur {
+        fill: none;
+        stroke: #404041;
+        stroke-width: 6px;
+        stroke-linecap: round;
+      }
+
+      .hidden {
+        display: none;
+      }
+    </style>
+  </defs>
+  <g id="bracelet">
+    <path class="trait bracelet-centre" d="M590,42c62-10,124-10,186,0l-8,690c-57,10-113,10-170,0l-8-690Z"/>
+    <path class="trait bracelet-haut" d="M548,210c22-30,34-58,40-92,63-9,127-9,190,0,6,34,18,62,40,92-90,12-180,12-270,0Z"/>
+    <path class="trait bracelet-bas" d="M548,558c22,30,34,58,40,92,63,9,127,9,190,0,6-34,18-62,40-92-90-12-180-12-270,0Z"/>
+    <circle class="trait bracelet-trou" cx="683" cy="672" r="7"/>
+    <circle class="trait bracelet-trou" cx="683" cy="700" r="7"/>
+    <circle class="trait bracelet-trou" cx="683" cy="728" r="7"/>
+  </g>
+  <g id="boitier_coussin">
+    <rect class="trait boitier-couronne" x="871" y="296" width="20" height="56" rx="7" ry="7"/>
+    <rect class="trait boitier-bouton" x="871" y="378" width="12" height="64" rx="4" ry="4"/>
+    <rect class="trait boitier-exterieur" x="491" y="172" width="384" height="424" rx="118" ry="118"/>
+    <rect class="trait boitier-interieur" x="509" y="190" width="348" height="388" rx="102" ry="102"/>
+    <rect class="ecran-fond boitier-ecran" x="527" y="208" width="312" height="352" rx="86" ry="86"/>
+  </g>
+  <g id="ecran">
+    <text class="texte ecran-date" x="683" y="282" font-size="28">Lun. 24 oct.</text>
+    <text class="texte ecran-heure" x="683" y="392" font-size="104" letter-spacing="-4">10:10</text>
+    <g class="widget-activite">
+      <circle class="anneau-fond" cx="613" cy="460" r="24"/>
+      <path class="anneau-valeur" d="M613,436a24,24,0,1,1,-24,24"/>
+    </g>
+    <g class="widget-pas">
+      <circle class="anneau-fond" cx="683" cy="460" r="24"/>
+      <path class="anneau-valeur" d="M683,436a24,24,0,0,1,24,24"/>
+    </g>
+    <g class="widget-batterie">
+      <rect class="trait batterie-corps" x="732" y="447" width="44" height="26" rx="5" ry="5"/>
+      <rect class="trait batterie-borne" x="776" y="455" width="5" height="10" rx="1.5" ry="1.5"/>
+      <rect class="batterie-niveau" x="736" y="451" width="26" height="18" rx="3" ry="3" fill="#404041"/>
+    </g>
+    <text class="texte ecran-titre" x="683" y="532" font-size="26">TiK•TaK</text>
+  </g>
+</svg>

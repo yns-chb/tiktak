@@ -1,0 +1,270 @@
+---
+export const prerender = false;
+import Layout from "../layouts/Layout.astro";
+import MontreRonde from "../components/MontreRonde.astro";
+import MontreCarree from "../components/MontreCarree.astro";
+import MontreCoussin from "../components/MontreCoussin.astro";
+import db from "../lib/db";
+import { MODELES } from "../lib/modeles";
+import { prixEuro } from "../lib/format";
+
+// Prix de départ de chaque modèle = somme des prix de ses composants (table COMPOSANT)
+const prixDe = (ids: number[]) =>
+	(
+		db
+			.prepare(
+				`SELECT SUM(prix) AS total FROM COMPOSANT WHERE id_composant IN (${ids.map(() => "?").join(",")})`,
+			)
+			.get(...ids) as { total: number | null }
+	).total ?? 0;
+const modeles = MODELES.map((m) => ({ ...m, prix: prixDe(m.composants) }));
+
+const etapes = [
+	{
+		n: "01",
+		titre: "Le cadran",
+		texte: "Rond, carré ou coussin, sous verre saphir ou minéral : la forme qui donne son caractère à la montre.",
+	},
+	{
+		n: "02",
+		titre: "Le boîtier",
+		texte: "Acier, titane ou laiton : associez les deux anneaux pour un contraste discret ou une ligne unie.",
+	},
+	{
+		n: "03",
+		titre: "Le bracelet",
+		texte: "Cuir, acier ou silicone, dans la couleur qui vous accompagne au quotidien.",
+	},
+	{
+		n: "04",
+		titre: "Votre nom",
+		texte: "Baptisez votre création, enregistrez-la ou commandez-la : la livraison est offerte.",
+	},
+];
+
+const engagements = [
+	{
+		titre: "Fabrication française",
+		texte: "Chaque montre est fabriquée en France, une fois votre commande validée.",
+	},
+	{
+		titre: "Livraison offerte",
+		texte: "Sur toutes les commandes, sans minimum d'achat.",
+	},
+	{
+		titre: "Vos créations gardées",
+		texte: "Enregistrez autant de modèles que vous voulez et revenez-y quand vous le souhaitez.",
+	},
+];
+---
+
+<Layout
+	title="Montres connectées personnalisables, fabriquées en France"
+	description="Composez votre montre connectée : cadran, boîtier, bracelet et couleurs. Fabrication française, livraison offerte."
+>
+	<!-- Hero -->
+	<section
+		class="mx-auto grid max-w-7xl items-center gap-10 px-6 py-12 lg:grid-cols-2 lg:gap-16 lg:py-20"
+	>
+		<div>
+			<p
+				class="mb-6 text-xs uppercase tracking-[0.25em] text-base-content/60"
+			>
+				Montres connectées personnalisables · Fabrication française
+			</p>
+			<h1
+				class="mb-6 text-5xl leading-[1.05] sm:text-7xl lg:text-[5.5rem]"
+			>
+				Votre montre,<br />à votre image.
+			</h1>
+			<p class="mb-8 max-w-md text-lg text-base-content/70">
+				Choisissez le cadran, le boîtier, le bracelet et leurs couleurs.
+				Vous composez, nous fabriquons en France une montre qui n'existe
+				qu'une fois : la vôtre.
+			</p>
+			<div class="flex flex-wrap gap-3">
+				<a href="/configurateur" class="btn btn-primary"
+					>Créer ma montre</a
+				>
+				<a href="#inspirations" class="btn btn-outline"
+					>Voir des modèles</a
+				>
+			</div>
+			<p
+				class="mt-6 flex items-center gap-2 text-xs text-base-content/70"
+			>
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					class="h-4 w-4"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="1.6"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					aria-hidden="true"
+				>
+					<path d="M3 7h11v9H3z"></path><path d="M14 10h4l3 3v3h-7"
+					></path><circle cx="7" cy="17.5" r="1.5"></circle><circle
+						cx="17"
+						cy="17.5"
+						r="1.5"></circle>
+				</svg>
+				Livraison offerte sur toutes les commandes
+			</p>
+		</div>
+
+		<div
+			class="flex items-end justify-center gap-6 rounded-box bg-base-300 px-6 py-12 sm:gap-10 sm:py-16"
+		>
+			<div class="w-24 sm:w-36 lg:w-40">
+				<MontreCoussin
+					bracelet="#9c6236"
+					exterieur="#c5c8cd"
+					interieur="#c4a462"
+					ecran="#f2efe8"
+					texte="#2b2320"
+				/>
+			</div>
+			<div class="w-32 sm:w-52 lg:w-60">
+				<MontreRonde
+					bracelet="#1f1f1f"
+					exterieur="#c5c8cd"
+					interieur="#e8e6e1"
+					ecran="#1e3350"
+					texte="#f5f1e8"
+				/>
+			</div>
+		</div>
+	</section>
+
+	<!-- Création assistée -->
+	<section class="bg-neutral">
+		<div
+			class="mx-auto grid max-w-7xl items-center gap-8 px-6 py-14 lg:grid-cols-2 lg:gap-16 lg:py-16"
+		>
+			<div>
+				<p class="mb-3 text-xs uppercase tracking-[0.25em]">
+					Nouveau · Création assistée
+				</p>
+				<h2 class="mb-4 text-4xl sm:text-5xl">
+					Décrivez-la, on la compose pour vous.
+				</h2>
+				<p class="max-w-md text-sm">
+					Dans le configurateur, décrivez en quelques mots la montre
+					que vous imaginez. L'assistant la compose sous vos yeux,
+					puis vous ajustez chaque détail.
+				</p>
+			</div>
+			<div class="space-y-4">
+				<p class="border border-base-content/60 px-4 py-3 text-sm">
+					« Une montre ronde et sobre, bracelet en cuir camel, écran
+					ivoire »
+				</p>
+				<a href="/configurateur" class="btn btn-secondary"
+					>Essayer l'assistant</a
+				>
+			</div>
+		</div>
+	</section>
+
+	<!-- Comment ça marche -->
+	<section class="mx-auto max-w-7xl px-6 py-16 lg:py-24">
+		<p
+			class="mb-3 text-xs uppercase tracking-[0.25em] text-base-content/60"
+		>
+			Comment ça marche
+		</p>
+		<h2 class="mb-10 text-4xl sm:text-5xl">
+			Quatre étapes, une montre unique.
+		</h2>
+		<ol class="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+			{
+				etapes.map((e) => (
+					<li class="border-t border-base-content pt-4">
+						<p class="mb-3 text-xs text-base-content/60">{e.n}</p>
+						<h3 class="mb-2 font-serif text-2xl font-normal">
+							{e.titre}
+						</h3>
+						<p class="text-sm text-base-content/70">{e.texte}</p>
+					</li>
+				))
+			}
+		</ol>
+	</section>
+
+	<!-- Modèles de départ -->
+	<section
+		id="inspirations"
+		class="mx-auto max-w-7xl scroll-mt-6 px-6 pb-16 lg:pb-24"
+	>
+		<p
+			class="mb-3 text-xs uppercase tracking-[0.25em] text-base-content/60"
+		>
+			Inspirations
+		</p>
+		<div class="mb-10 flex flex-wrap items-end justify-between gap-4">
+			<h2 class="text-4xl sm:text-5xl">Partez d'un modèle.</h2>
+			<p class="max-w-xs text-sm text-base-content/70">
+				Trois compositions de départ. Chaque détail reste modifiable
+				dans le configurateur.
+			</p>
+		</div>
+		<div class="grid gap-6 md:grid-cols-3">
+			{
+				modeles.map((m) => (
+					<article class="overflow-hidden rounded-box bg-base-100">
+						<div class="flex justify-center bg-base-300 px-6 py-8">
+							<div class="w-28 sm:w-32">
+								{m.forme === "rond" && (
+									<MontreRonde {...m.apercu} />
+								)}
+								{m.forme === "carre" && (
+									<MontreCarree {...m.apercu} />
+								)}
+								{m.forme === "coussin" && (
+									<MontreCoussin {...m.apercu} />
+								)}
+							</div>
+						</div>
+						<div class="space-y-3 p-5">
+							<div class="flex items-baseline justify-between gap-3">
+								<h3 class="font-serif text-2xl font-normal">
+									{m.nom}
+								</h3>
+								<p class="whitespace-nowrap text-sm">
+									dès {prixEuro(m.prix)}
+								</p>
+							</div>
+							<p class="min-h-10 text-xs text-base-content/70">
+								{m.description}
+							</p>
+							<a
+								href={`/configurateur?modele=${m.slug}`}
+								class="btn btn-outline w-full"
+							>
+								Personnaliser ce modèle
+							</a>
+						</div>
+					</article>
+				))
+			}
+		</div>
+	</section>
+
+	<!-- Engagements -->
+	<section class="border-t border-base-300">
+		<div class="mx-auto grid max-w-7xl gap-8 px-6 py-12 md:grid-cols-3">
+			{
+				engagements.map((e) => (
+					<div>
+						<h3 class="mb-2 font-serif text-xl font-medium">
+							{e.titre}
+						</h3>
+						<p class="text-sm text-base-content/70">{e.texte}</p>
+					</div>
+				))
+			}
+		</div>
+	</section>
+</Layout>

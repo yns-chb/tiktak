@@ -1,0 +1,36 @@
+---
+export const prerender = false;
+import Layout from "../../layouts/Layout.astro";
+import ModifierMontre from "../../components/ModifierMontre.astro";
+import db from "../../lib/db";
+import type { Montre, Composant } from "../../lib/db";
+import { formeDuSvg, couleursDuSvg } from "../../lib/montre";
+
+// L'identifiant vient de l'URL : on vérifie aussi user_id, sinon n'importe qui pourrait ouvrir la montre d'un autre (faille IDOR)
+const montre = db
+    .prepare("SELECT * FROM MONTRE WHERE id_montre = ? AND user_id = ?")
+    .get(Number(Astro.params.id), Astro.locals.user!.id) as Montre | null;
+
+if (!montre) return Astro.redirect("/montres");
+
+const composants = db.prepare("SELECT * FROM COMPOSANT").all() as Composant[];
+const selection = (
+    db
+        .prepare("SELECT id_composant FROM POSSEDE WHERE id_montre = ?")
+        .all(montre.id_montre) as { id_composant: number }[]
+).map((l) => l.id_composant);
+---
+
+<Layout>
+    <div class="mx-auto max-w-6xl px-6 py-12">
+        <ModifierMontre
+            id_montre={montre.id_montre}
+            nom={montre.nom}
+            date_creation={montre.date_creation}
+            forme={formeDuSvg(montre.svg)}
+            couleurs={couleursDuSvg(montre.svg)}
+            composants={composants}
+            selection={selection}
+        />
+    </div>
+</Layout>

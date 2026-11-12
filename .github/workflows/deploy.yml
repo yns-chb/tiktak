@@ -1,0 +1,41 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - run: bun install --frozen-lockfile
+      - run: bun run --bun build
+
+      - name: Clé SSH
+        run: |
+          install -m 700 -d ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -p "${{ secrets.VPS_PORT }}" -H "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts
+
+      # Le site est construit ici, puis envoyé sur le VPS. .env et data/ (la base) ne sont jamais touchés.
+      - name: Envoi sur le VPS
+        run: |
+          rsync -az --delete -e "ssh -p ${{ secrets.VPS_PORT }}" \
+            dist deploy package.json bun.lock \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/tiktak/
+
+      - name: Dépendances et redémarrage
+        run: |
+          ssh -p "${{ secrets.VPS_PORT }}" ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} '
+            set -e
+            export PATH="$HOME/.bun/bin:$PATH"
+            cd /var/www/tiktak
+            bun install --production
+            sudo systemctl restart tiktak
+          '

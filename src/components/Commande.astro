@@ -1,0 +1,62 @@
+---
+import { dateFr, prixEuro } from "../lib/format";
+
+// Les propriétés reprennent les colonnes de la table COMMANDE : <Commande {...commande}>
+// Les montres commandées se placent dans le slot, avec <LigneCommande />
+interface Props {
+  id_commande: number;
+  date_commande: string;
+  num_voie?: string;
+  nom_rue?: string;
+  code_postal?: string;
+  ville?: string;
+  // Affichage seulement : somme des lignes, calculée par la page
+  total?: number;
+}
+
+const {
+  id_commande,
+  date_commande,
+  num_voie,
+  nom_rue,
+  code_postal,
+  ville,
+  total,
+} = Astro.props;
+const rue = [num_voie, nom_rue].filter(Boolean).join(" ");
+const commune = [code_postal, ville].filter(Boolean).join(" ");
+const adresse = [rue, commune].filter(Boolean).join(", ");
+---
+
+<article
+  class="card border border-base-300 bg-base-100"
+  data-id-commande={id_commande}
+>
+  <div class="card-body gap-4">
+    <header class="flex flex-wrap items-baseline justify-between gap-2">
+      <h2 class="card-title font-serif text-2xl font-normal">
+        Commande n° {id_commande}
+      </h2>
+      <p class="text-sm text-base-content/60">{dateFr(date_commande)}</p>
+    </header>
+
+    <div class="divide-y divide-base-300 border-y border-base-300">
+      <slot />
+    </div>
+
+    {
+      adresse && (
+        <p class="text-sm text-base-content/70">Livrée à : {adresse}</p>
+      )
+    }
+
+    {
+      total !== undefined && (
+        <p class="flex items-baseline justify-between">
+          <span class="text-sm uppercase tracking-widest">Total</span>
+          <span class="font-serif text-3xl">{prixEuro(total)}</span>
+        </p>
+      )
+    }
+  </div>
+</article>

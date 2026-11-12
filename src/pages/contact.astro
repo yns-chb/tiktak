@@ -1,0 +1,70 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout title="Contact" description="Contactez l'équipe TiK•TaK.">
+	<div class="w-full max-w-5xl px-4 py-10 sm:px-6 sm:py-12 lg:ml-12 lg:px-8 lg:py-20">
+		<div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-16">
+			<header>
+				<p class="mb-3 text-xs uppercase tracking-[0.25em] text-base-content/60">
+					Une question ?
+				</p>
+				<h1 class="mb-5 text-5xl sm:text-6xl">Contactez-nous.</h1>
+				<p class="max-w-xl text-base-content/70">
+					Une question sur votre création, votre commande ou le
+					configurateur ? Écrivez-nous, nous vous répondrons dès que
+					possible.
+				</p>
+			</header>
+
+			<div class="space-y-6">
+				<div class="border-t border-base-300 pt-5">
+					<h2 class="mb-2 font-serif text-2xl font-normal">Par email</h2>
+					<a
+						class="link link-primary break-all text-sm"
+						href="mailto:contact@tiktak.yanischouhib.fr"
+					>
+						contact@tiktak.yanischouhib.fr
+					</a>
+				</div>
+				<div class="border-t border-base-300 pt-5">
+					<h2 class="mb-2 font-serif text-2xl font-normal">TiK•TaK</h2>
+					<p class="text-sm leading-6 text-base-content/70">
+						Un projet de montres connectées personnalisables, fabriquées
+						en France.
+					</p>
+				</div>
+			</div>
+		</div>
+
+		<form
+			class="mt-12 max-w-2xl space-y-5 border-t border-base-300 pt-6 sm:mt-16"
+			action="mailto:contact@tiktak.yanischouhib.fr"
+			method="post"
+			enctype="text/plain"
+		>
+			<h2 class="font-serif text-3xl font-normal">Envoyer un message</h2>
+			<div class="grid gap-5 sm:grid-cols-2">
+				<label class="form-control">
+					<span class="mb-2 text-xs uppercase tracking-widest text-base-content/60">
+						Nom
+					</span>
+					<input name="Nom" type="text" autocomplete="name" required class="input input-bordered w-full" />
+				</label>
+				<label class="form-control">
+					<span class="mb-2 text-xs uppercase tracking-widest text-base-content/60">
+						Email
+					</span>
+					<input name="Email" type="email" autocomplete="email" required class="input input-bordered w-full" />
+				</label>
+			</div>
+			<label class="form-control">
+				<span class="mb-2 text-xs uppercase tracking-widest text-base-content/60">
+					Message
+				</span>
+				<textarea name="Message" required rows="6" class="textarea textarea-bordered w-full"></textarea>
+			</label>
+			<button type="submit" class="btn btn-primary">Ouvrir mon application email</button>
+		</form>
+	</div>
+</Layout>

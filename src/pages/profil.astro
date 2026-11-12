@@ -1,0 +1,236 @@
+---
+export const prerender = false;
+import Layout from "../layouts/Layout.astro";
+import Commande from "../components/Commande.astro";
+import Montre from "../components/Montre.astro";
+import LigneCommande from "../components/LigneCommande.astro";
+import db from "../lib/db";
+import type { Commande as CommandeRow, Montre as MontreRow } from "../lib/db";
+import { totalDe } from "../lib/commande";
+import { dateFr } from "../lib/format";
+
+const user = Astro.locals.user!;
+
+// Section affichée : ?section=commandes (par défaut), creations ou infos
+const demande = Astro.url.searchParams.get("section");
+const section =
+  demande === "infos" || demande === "creations" ? demande : "commandes";
+const ok = Astro.url.searchParams.get("ok");
+
+// Historique : uniquement les commandes de l'utilisateur connecté
+const commandes = (
+  section === "commandes"
+    ? db
+        .prepare(
+          "SELECT * FROM COMMANDE WHERE user_id = ? ORDER BY date_commande DESC, id_commande DESC",
+        )
+        .all(user.id)
+    : []
+) as CommandeRow[];
+
+const lignesDe = db.prepare(
+  `SELECT MONTRE.id_montre, MONTRE.nom, MONTRE.prix, MONTRE.svg, LIGNE_DE_COMMANDE.quantite
+   FROM LIGNE_DE_COMMANDE, MONTRE
+   WHERE LIGNE_DE_COMMANDE.id_montre = MONTRE.id_montre AND LIGNE_DE_COMMANDE.id_commande = ?`,
+);
+
+// Mes créations : uniquement les montres de l'utilisateur connecté
+const montres = (
+  section === "creations"
+    ? db
+        .prepare(
+          "SELECT * FROM MONTRE WHERE user_id = ? ORDER BY date_creation DESC, id_montre DESC",
+        )
+        .all(user.id)
+    : []
+) as MontreRow[];
+const composantsDe = db.prepare(
+  `SELECT COMPOSANT.libelle, COMPOSANT.materiau, COMPOSANT.couleur
+   FROM POSSEDE, COMPOSANT
+   WHERE POSSEDE.id_composant = COMPOSANT.id_composant AND POSSEDE.id_montre = ?`,
+);
+const commandee = db.prepare(
+  "SELECT 1 FROM LIGNE_DE_COMMANDE WHERE id_montre = ?",
+);
+
+const menu = [
+  {
+    n: "01",
+    label: "Mes commandes",
+    href: "/profil",
+    actif: section === "commandes",
+  },
+  {
+    n: "02",
+    label: "Mes créations",
+    href: "/profil?section=creations",
+    actif: section === "creations",
+  },
+  {
+    n: "03",
+    label: "Mes informations",
+    href: "/profil?section=infos",
+    actif: section === "infos",
+  },
+];
+---
+
+<Layout noindex>
+  <div
+    class="mx-auto grid max-w-6xl gap-10 px-6 py-12 lg:grid-cols-[16rem_minmax(0,1fr)]"
+  >
+    <!-- Menu du compte -->
+    <nav
+      aria-label="Mon compte"
+      class="space-y-4 text-sm uppercase tracking-widest"
+    >
+      <p class="text-xs text-base-content/60">Bonjour {user.name}</p>
+      <ul class="space-y-3">
+        {
+          menu.map((m) => (
+            <li class="flex gap-3">
+              <span class="text-base-content/50">{m.n}</span>
+              <a
+                href={m.href}
+                class:list={[
+                  m.actif
+                    ? "font-semibold"
+                    : "text-base-content/70 hover:text-base-content",
+                ]}
+              >
+                {m.label}
+              </a>
+            </li>
+          ))
+        }
+        <li class="flex gap-3">
+          <span class="text-base-content/50">04</span>
+          <button
+            id="logout-profil"
+            type="button"
+            class="uppercase tracking-widest text-base-content/70 hover:text-base-content"
+            >Déconnexion</button
+          >
+        </li>
+      </ul>
+    </nav>
+
+    <!-- Contenu -->
+    <div>
+      {
+        section === "commandes" ? (
+          <>
+            <h1 class="mb-8 text-4xl">Mes commandes</h1>
+            {ok && (
+              <p class="mb-8 rounded-box border border-primary bg-base-100 p-4 text-sm">
+                Merci ! Votre commande n° {ok} est enregistrée.
+              </p>
+            )}
+            {commandes.length === 0 && (
+              <p>
+                Vous n'avez pas encore passé de commande.{" "}
+                <a href="/montres" class="link link-primary">
+                  Voir mes créations
+                </a>
+              </p>
+            )}
+            <div class="space-y-6">
+              {commandes.map((c) => {
+                const lignes = lignesDe.all(c.id_commande) as {
+                  id_montre: number;
+                  nom: string;
+                  prix: number;
+                  svg: string | null;
+                  quantite: number;
+                }[];
+                return (
+                  <Commande {...c} total={totalDe(lignes)}>
+                    {lignes.map((l) => (
+                      <LigneCommande {...l} />
+                    ))}
+                  </Commande>
+                );
+              })}
+            </div>
+          </>
+        ) : section === "creations" ? (
+          <>
+            <h1 class="mb-8 text-4xl">Mes créations</h1>
+            {montres.length === 0 && (
+              <p>
+                Vous n'avez pas encore créé de montre.{" "}
+                <a href="/configurateur" class="link link-primary">
+                  Créer ma première montre
+                </a>
+              </p>
+            )}
+            <div class="grid gap-6 sm:grid-cols-2">
+              {montres.map((m) => (
+                <Montre
+                  {...m}
+                  composants={composantsDe.all(m.id_montre) as any}
+                  statut={
+                    commandee.get(m.id_montre) ? "Commandée" : "Enregistrée"
+                  }
+                />
+              ))}
+            </div>
+          </>
+        ) : (
+          <>
+            <h1 class="mb-8 text-4xl">Mes informations</h1>
+            <dl class="max-w-md divide-y divide-base-300 border-y border-base-300 text-sm">
+              <div class="flex justify-between gap-4 py-3">
+                <>
+                  <dt class="text-base-content/60">Nom</dt>
+                  <dd>{user.name}</dd>
+                </>
+              </div>
+              <div class="flex justify-between gap-4 py-3">
+                <>
+                  <dt class="text-base-content/60">Email</dt>
+                  <dd>{user.email}</dd>
+                </>
+              </div>
+              <div class="flex justify-between gap-4 py-3">
+                <>
+                  <dt class="text-base-content/60">Compte créé le</dt>
+                  <dd>{dateFr(user.createdAt)}</dd>
+                </>
+              </div>
+            </dl>
+          </>
+        )
+      }
+    </div>
+  </div>
+</Layout>
+
+<script>
+  import { authClient } from "../lib/auth-client";
+
+  // Bouton « supprimer » des cartes de montres
+  document
+    .querySelectorAll<HTMLButtonElement>("button.supprimer")
+    .forEach((b) =>
+      b.addEventListener("click", async () => {
+        if (!confirm("Supprimer cette création définitivement ?")) return;
+        const reponse = await fetch(`/api/montres/${b.dataset.idMontre}`, {
+          method: "DELETE",
+        });
+        if (reponse.ok) window.location.reload();
+        else
+          alert(
+            (await reponse.json().catch(() => ({}))).erreur ??
+              "Suppression impossible",
+          );
+      }),
+    );
+
+  document
+    .querySelector("#logout-profil")
+    ?.addEventListener("click", async () => {
+      await authClient.signOut();
+      window.location.href = "/";
+    });
+</script>

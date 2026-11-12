@@ -1,0 +1,221 @@
+---
+interface Props {
+    bracelet?: string;
+    exterieur?: string;
+    interieur?: string;
+    ecran?: string;
+    texte?: string;
+}
+
+// Valeurs par défaut : la montre de base grise, non personnalisée
+const {
+    bracelet = "#ddd9d2",
+    exterieur = "#e8e6e1",
+    interieur = "#f4f3f0",
+    ecran = "#cfcbc4",
+    texte = "#2b2320",
+} = Astro.props;
+---
+
+<svg
+    xmlns="http://www.w3.org/2000/svg"
+    xmlns:xlink="http://www.w3.org/1999/xlink"
+    version="1.1"
+    viewBox="400 30 510 745"
+    class="montre h-auto w-full"
+    data-forme="coussin"
+    role="img"
+    aria-label="Montre connectée TiK•TaK coussin"
+>
+    <g id="bracelet">
+        <path
+            class="bracelet-centre"
+            fill={bracelet}
+            stroke="#000"
+            stroke-width=".5"
+            d="M590,42c62-10,124-10,186,0l-8,690c-57,10-113,10-170,0l-8-690Z"
+        ></path>
+        <path
+            class="bracelet-haut"
+            fill={bracelet}
+            stroke="#000"
+            stroke-width=".5"
+            d="M548,210c22-30,34-58,40-92,63-9,127-9,190,0,6,34,18,62,40,92-90,12-180,12-270,0Z"
+        ></path>
+        <path
+            class="bracelet-bas"
+            fill={bracelet}
+            stroke="#000"
+            stroke-width=".5"
+            d="M548,558c22,30,34,58,40,92,63,9,127,9,190,0,6-34,18-62,40-92-90-12-180-12-270,0Z"
+        ></path>
+        <circle
+            class="bracelet-trou"
+            cx="683"
+            cy="672"
+            r="7"
+            fill="#000"
+            fill-opacity=".2"></circle>
+        <circle
+            class="bracelet-trou"
+            cx="683"
+            cy="700"
+            r="7"
+            fill="#000"
+            fill-opacity=".2"></circle>
+        <circle
+            class="bracelet-trou"
+            cx="683"
+            cy="728"
+            r="7"
+            fill="#000"
+            fill-opacity=".2"></circle>
+    </g>
+    <g id="boitier_coussin">
+        <rect
+            class="boitier-couronne"
+            fill={exterieur}
+            stroke="#000"
+            stroke-width=".5"
+            x="871"
+            y="296"
+            width="20"
+            height="56"
+            rx="7"
+            ry="7"></rect>
+        <rect
+            class="boitier-bouton"
+            fill={exterieur}
+            stroke="#000"
+            stroke-width=".5"
+            x="871"
+            y="378"
+            width="12"
+            height="64"
+            rx="4"
+            ry="4"></rect>
+        <rect
+            class="boitier-exterieur"
+            fill={exterieur}
+            stroke="#000"
+            stroke-width=".5"
+            x="491"
+            y="172"
+            width="384"
+            height="424"
+            rx="118"
+            ry="118"></rect>
+        <rect
+            class="boitier-interieur"
+            fill={interieur}
+            stroke="#000"
+            stroke-width=".5"
+            x="509"
+            y="190"
+            width="348"
+            height="388"
+            rx="102"
+            ry="102"></rect>
+        <rect
+            class="boitier-ecran"
+            fill={ecran}
+            stroke="#000"
+            stroke-width=".5"
+            x="527"
+            y="208"
+            width="312"
+            height="352"
+            rx="86"
+            ry="86"></rect>
+    </g>
+    <g id="ecran">
+        <text
+            class="ecran-date"
+            fill={texte}
+            x="683"
+            y="282"
+            font-family="Arial, sans-serif"
+            font-size="28"
+            text-anchor="middle">Lun. 24 oct.</text
+        >
+        <text
+            class="ecran-heure"
+            fill={texte}
+            x="683"
+            y="392"
+            font-family="Arial, sans-serif"
+            font-size="104"
+            letter-spacing="-4"
+            text-anchor="middle">10:10</text
+        >
+        <g class="widget-activite">
+            <circle
+                cx="613"
+                cy="460"
+                r="24"
+                fill="none"
+                stroke={texte}
+                stroke-opacity=".25"
+                stroke-width="6"></circle>
+            <path
+                d="M613,436a24,24,0,1,1,-24,24"
+                fill="none"
+                stroke={texte}
+                stroke-width="6"
+                stroke-linecap="round"></path>
+        </g>
+        <g class="widget-pas">
+            <circle
+                cx="683"
+                cy="460"
+                r="24"
+                fill="none"
+                stroke={texte}
+                stroke-opacity=".25"
+                stroke-width="6"></circle>
+            <path
+                d="M683,436a24,24,0,0,1,24,24"
+                fill="none"
+                stroke={texte}
+                stroke-width="6"
+                stroke-linecap="round"></path>
+        </g>
+        <g class="widget-batterie">
+            <rect
+                x="732"
+                y="447"
+                width="44"
+                height="26"
+                rx="5"
+                ry="5"
+                fill="none"
+                stroke={texte}
+                stroke-width="1.5"></rect>
+            <rect
+                x="776"
+                y="455"
+                width="5"
+                height="10"
+                rx="1.5"
+                ry="1.5"
+                fill={texte}></rect>
+            <rect
+                x="736"
+                y="451"
+                width="26"
+                height="18"
+                rx="3"
+                ry="3"
+                fill={texte}></rect>
+        </g>
+        <text
+            class="ecran-titre"
+            fill={texte}
+            x="683"
+            y="532"
+            font-family="Arial, sans-serif"
+            font-size="26"
+            text-anchor="middle">TiK•TaK</text
+        >
+    </g>
+</svg>

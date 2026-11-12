@@ -1,0 +1,131 @@
+---
+export const prerender = false;
+import Layout from "../layouts/Layout.astro";
+
+// Page où revenir après la connexion. On n'accepte qu'un chemin du site (pas d'adresse externe).
+const demande = Astro.url.searchParams.get("redirect") ?? "";
+const redirect =
+    demande.startsWith("/") && !demande.startsWith("//") ? demande : "/montres";
+
+if (Astro.locals.user) return Astro.redirect(redirect);
+---
+
+<Layout
+    title="Connexion"
+    description="Connectez-vous à TiK•TaK avec votre compte Google ou votre email pour enregistrer et commander vos montres."
+>
+    <div
+        class="mx-auto w-full max-w-sm px-6 py-16"
+        data-redirect={redirect}
+        id="login-page"
+    >
+        <h1 class="mb-2 text-4xl">Connexion</h1>
+        <p class="mb-8 text-sm text-base-content/70">
+            Connectez-vous pour enregistrer et commander vos montres.
+        </p>
+
+        <button id="google" type="button" class="btn btn-outline w-full">
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-4 w-4"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+            >
+                <path
+                    fill="#4285F4"
+                    d="M22.5 12.2c0-.8-.1-1.5-.2-2.2H12v4.3h5.9a5 5 0 0 1-2.2 3.3v2.7h3.5c2.1-1.9 3.3-4.7 3.3-8.1z"
+                ></path>
+                <path
+                    fill="#34A853"
+                    d="M12 23c3 0 5.4-1 7.2-2.7l-3.5-2.7c-1 .7-2.2 1-3.7 1-2.8 0-5.2-1.9-6-4.5H2.4v2.8A11 11 0 0 0 12 23z"
+                ></path>
+                <path
+                    fill="#FBBC05"
+                    d="M6 14.1a6.6 6.6 0 0 1 0-4.2V7.1H2.4a11 11 0 0 0 0 9.8z"
+                ></path>
+                <path
+                    fill="#EA4335"
+                    d="M12 5.4c1.6 0 3 .6 4.2 1.6l3.1-3.1A11 11 0 0 0 2.4 7.1L6 9.9c.8-2.6 3.2-4.5 6-4.5z"
+                ></path>
+            </svg>
+            Continuer avec Google
+        </button>
+
+        <p
+            class="my-6 text-center text-xs uppercase tracking-widest text-base-content/50"
+        >
+            ou
+        </p>
+
+        <form id="form" class="flex flex-col gap-3">
+            <input
+                name="name"
+                placeholder="Nom (pour créer un compte)"
+                autocomplete="name"
+                class="input input-bordered w-full"
+            />
+            <input
+                name="email"
+                type="email"
+                placeholder="Email"
+                autocomplete="email"
+                class="input input-bordered w-full"
+                required
+            />
+            <input
+                name="password"
+                type="password"
+                placeholder="Mot de passe (8 caractères min.)"
+                autocomplete="current-password"
+                class="input input-bordered w-full"
+                required
+            />
+            <p id="error" class="min-h-5 text-sm text-error"></p>
+            <button type="button" id="login" class="btn btn-secondary"
+                >Se connecter</button
+            >
+            <button type="button" id="signup" class="btn btn-outline"
+                >Créer un compte</button
+            >
+        </form>
+    </div>
+</Layout>
+
+<script>
+    import { authClient } from "../lib/auth-client";
+
+    const page = document.querySelector<HTMLElement>("#login-page")!;
+    const redirect = page.dataset.redirect ?? "/montres";
+    const form = document.querySelector<HTMLFormElement>("#form")!;
+    const error = document.querySelector("#error")!;
+
+    async function submit(mode: "login" | "signup") {
+        const d = new FormData(form);
+        const email = d.get("email") as string;
+        const password = d.get("password") as string;
+        const name = (d.get("name") as string) || email;
+
+        const { error: err } =
+            mode === "login"
+                ? await authClient.signIn.email({ email, password })
+                : await authClient.signUp.email({ name, email, password });
+
+        if (err) error.textContent = err.message ?? "Erreur";
+        else window.location.href = redirect;
+    }
+
+    document
+        .querySelector("#login")!
+        .addEventListener("click", () => submit("login"));
+    document
+        .querySelector("#signup")!
+        .addEventListener("click", () => submit("signup"));
+    document
+        .querySelector("#google")!
+        .addEventListener("click", () =>
+            authClient.signIn.social({
+                provider: "google",
+                callbackURL: redirect,
+            }),
+        );
+</script>

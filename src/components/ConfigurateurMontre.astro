@@ -1,0 +1,944 @@
+---
+import MontreRonde from "./MontreRonde.astro";
+import MontreCarree from "./MontreCarree.astro";
+import MontreCoussin from "./MontreCoussin.astro";
+import Composant from "./Composant.astro";
+
+// composants = les lignes de la table COMPOSANT (cadrans, boîtiers, bracelets)
+// Les autres props ne servent que pour la modification d'une montre existante (voir ModifierMontre)
+interface Couleurs {
+    bracelet: string;
+    exterieur: string;
+    interieur: string;
+    ecran: string;
+    texte: string;
+}
+interface Props {
+    composants: {
+        id_composant: number;
+        libelle: string;
+        materiau: string;
+        couleur: string;
+        prix: number;
+        finition?: string | null;
+        description?: string | null;
+    }[];
+    mode?: "creer" | "modifier";
+    id_montre?: number;
+    nom?: string;
+    forme?: "rond" | "carre" | "coussin";
+    couleurs?: Partial<Couleurs>;
+    selection?: number[]; // id_composant déjà choisis
+    ecran?: string; // teinte d'écran choisie au départ (Noir, Ivoire, Bleu nuit)
+}
+
+const {
+    composants,
+    mode = "creer",
+    id_montre,
+    nom = "",
+    forme = "rond",
+    couleurs = {},
+    selection = [],
+    ecran: ecranDepart,
+} = Astro.props;
+
+const c: Couleurs = {
+    bracelet: "#ddd9d2",
+    exterieur: "#e8e6e1",
+    interieur: "#f4f3f0",
+    ecran: "#cfcbc4",
+    texte: "#2b2320",
+    ...couleurs,
+};
+
+// Teintes d'écran proposées à l'étape Finitions (incluses dans le prix)
+const ECRANS = [
+    {
+        nom: "Noir",
+        hex: "#1f1f1f",
+        finition: "Mat",
+        description:
+            "Fond noir mat : un contraste maximal et une lecture immédiate.",
+    },
+    {
+        nom: "Ivoire",
+        hex: "#f2efe8",
+        finition: "Satiné",
+        description:
+            "Fond ivoire satiné : une douceur lumineuse, très lisible en plein jour.",
+    },
+    {
+        nom: "Bleu nuit",
+        hex: "#1e3350",
+        finition: "Soleillé",
+        description:
+            "Fond bleu nuit soleillé : un éclat profond qui change avec la lumière.",
+    },
+];
+
+const norm = (s: string) =>
+    s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+const cadrans = composants.filter((x) => norm(x.libelle).startsWith("cadran"));
+const boitiersExt = composants.filter(
+    (x) =>
+        norm(x.libelle).includes("boitier") && !norm(x.libelle).includes("int"),
+);
+const boitiersInt = composants.filter(
+    (x) =>
+        norm(x.libelle).includes("boitier") && norm(x.libelle).includes("int"),
+);
+const bracelets = composants.filter((x) => norm(x.libelle) === "bracelet");
+
+// Premier choix par défaut si rien n'est sélectionné
+const choisi = (liste: typeof composants, i: number) =>
+    liste.some((x) => selection.includes(x.id_composant))
+        ? selection.includes(liste[i].id_composant)
+        : i === 0;
+
+const modifier = mode === "modifier";
+
+// Teinte d'écran cochée : la première en création, celle qui correspond à la couleur enregistrée en modification
+const ecranCoche = modifier
+    ? ECRANS.findIndex((e) => e.hex.toLowerCase() === c.ecran.toLowerCase())
+    : Math.max(
+          0,
+          ECRANS.findIndex((e) => e.nom === ecranDepart),
+      );
+---
+
+<form
+    id="configurateur"
+    class="grid gap-8 lg:grid-cols-[minmax(0,1fr)_28rem]"
+    data-mode={mode}
+    data-id-montre={id_montre ?? ""}
+    data-forme={forme}
+    data-ecran-perso={modifier && ecranCoche === -1 ? "1" : ""}
+>
+    <!-- Aperçu -->
+    <div class="lg:sticky lg:top-6 lg:self-start">
+        <div
+            class="flex min-h-[28rem] flex-col items-center justify-center rounded-box bg-base-300 px-6 py-10 lg:min-h-[40rem]"
+        >
+            <p class="text-xs uppercase tracking-[0.25em] text-base-content/60">
+                Votre création
+            </p>
+            <p
+                id="titre-nom"
+                class="mb-8 text-center font-serif text-4xl font-light"
+            >
+                {nom || "Ma TiK•TaK"}
+            </p>
+            <div
+                class="w-44 sm:w-56"
+                data-vue="rond"
+                class:list={{ hidden: forme !== "rond" }}
+            >
+                <MontreRonde
+                    bracelet={c.bracelet}
+                    exterieur={c.exterieur}
+                    interieur={c.interieur}
+                    ecran={c.ecran}
+                    texte={c.texte}
+                />
+            </div>
+            <div
+                class="w-44 sm:w-56"
+                data-vue="carre"
+                class:list={{ hidden: forme !== "carre" }}
+            >
+                <MontreCarree
+                    bracelet={c.bracelet}
+                    exterieur={c.exterieur}
+                    interieur={c.interieur}
+                    ecran={c.ecran}
+                    texte={c.texte}
+                />
+            </div>
+            <div
+                class="w-44 sm:w-56"
+                data-vue="coussin"
+                class:list={{ hidden: forme !== "coussin" }}
+            >
+                <MontreCoussin
+                    bracelet={c.bracelet}
+                    exterieur={c.exterieur}
+                    interieur={c.interieur}
+                    ecran={c.ecran}
+                    texte={c.texte}
+                />
+            </div>
+        </div>
+    </div>
+
+    <div class="space-y-6">
+        <!-- Assistant IA -->
+        <section class="rounded-box border border-base-300 bg-base-100 p-4">
+            <h2
+                class="mb-3 flex items-center gap-2 font-sans text-sm font-medium"
+            >
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                >
+                    <path
+                        d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"
+                    ></path><path d="M19 16l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z"
+                    ></path>
+                </svg>
+                Assistant TiK·TaK
+            </h2>
+            <div id="chat" class="mb-3 space-y-2 text-xs" aria-live="polite">
+                <p class="max-w-[85%] rounded-box bg-base-200 px-3 py-2">
+                    Décrivez la montre que vous imaginez, ou choisissez une
+                    suggestion : je la compose pour vous.
+                </p>
+            </div>
+            <div class="mb-3 flex flex-wrap gap-2">
+                {
+                    [
+                        "Ronde et sobre, cuir noir",
+                        "Carrée, tout en blanc",
+                        "Coussin, bleu nuit et or",
+                    ].map((s) => (
+                        <button
+                            type="button"
+                            class="suggestion rounded-full border border-base-300 bg-base-200 px-3 py-1 text-xs"
+                        >
+                            {s}
+                        </button>
+                    ))
+                }
+            </div>
+            <div class="flex gap-2">
+                <input
+                    id="prompt"
+                    type="text"
+                    placeholder="Carrée, cuir camel, écran ivoire"
+                    class="input input-bordered input-sm h-10 flex-1"
+                />
+                <button
+                    id="ia"
+                    type="button"
+                    class="btn btn-primary btn-sm h-10">Générer</button
+                >
+            </div>
+        </section>
+
+        <!-- Étapes -->
+        <section>
+            <p
+                id="etape-titre"
+                class="mb-2 text-xs uppercase tracking-[0.2em] text-base-content/70"
+            >
+            </p>
+            <ol class="mb-6 grid grid-cols-4 gap-2 text-xs">
+                {
+                    ["Cadran", "Boîtier", "Bracelet", "Finitions"].map(
+                        (nom, i) => (
+                            <li>
+                                <button
+                                    type="button"
+                                    class="onglet block w-full border-t-2 border-base-300 pt-1.5 text-left"
+                                    data-onglet={i}
+                                >
+                                    {nom}
+                                </button>
+                            </li>
+                        ),
+                    )
+                }
+            </ol>
+
+            <!-- 1. Cadran -->
+            <div data-etape="0" class="space-y-4">
+                <h3 class="text-2xl">Choisissez votre cadran</h3>
+                <p class="text-sm text-base-content/70">
+                    Rond, carré ou coussin : la forme du cadran donne tout son
+                    caractère à votre montre.
+                </p>
+                <div class="grid grid-cols-3 gap-2">
+                    {
+                        cadrans.map((x, i) => (
+                            <Composant {...x} checked={choisi(cadrans, i)} />
+                        ))
+                    }
+                </div>
+                <p
+                    class="description border-l-2 border-primary/40 pl-3 text-sm text-base-content/70"
+                    data-groupe="cadran"
+                >
+                </p>
+            </div>
+
+            <!-- 2. Boîtier -->
+            <div data-etape="1" class="hidden space-y-5">
+                <h3 class="text-2xl">Habillez le boîtier</h3>
+                <p class="text-sm text-base-content/70">
+                    Deux anneaux, deux matières. Associez-les pour un contraste
+                    discret ou une ligne unie.
+                </p>
+                <fieldset class="space-y-2">
+                    <legend
+                        class="mb-1 text-xs uppercase tracking-widest text-base-content/60"
+                        >Boîtier extérieur</legend
+                    >
+                    <div class="grid grid-cols-2 gap-2">
+                        {
+                            boitiersExt.map((x, i) => (
+                                <Composant
+                                    {...x}
+                                    checked={choisi(boitiersExt, i)}
+                                />
+                            ))
+                        }
+                    </div>
+                    <p
+                        class="description border-l-2 border-primary/40 pl-3 text-sm text-base-content/70"
+                        data-groupe="boitier-exterieur"
+                    >
+                    </p>
+                </fieldset>
+                <fieldset class="space-y-2">
+                    <legend
+                        class="mb-1 text-xs uppercase tracking-widest text-base-content/60"
+                        >Boîtier intérieur</legend
+                    >
+                    <div class="grid grid-cols-2 gap-2">
+                        {
+                            boitiersInt.map((x, i) => (
+                                <Composant
+                                    {...x}
+                                    checked={choisi(boitiersInt, i)}
+                                />
+                            ))
+                        }
+                    </div>
+                    <p
+                        class="description border-l-2 border-primary/40 pl-3 text-sm text-base-content/70"
+                        data-groupe="boitier-interieur"
+                    >
+                    </p>
+                </fieldset>
+            </div>
+
+            <!-- 3. Bracelet -->
+            <div data-etape="2" class="hidden space-y-4">
+                <h3 class="text-2xl">Choisissez le bracelet</h3>
+                <p class="text-sm text-base-content/70">
+                    Cuir, acier ou silicone : le bracelet accompagne votre style
+                    au quotidien.
+                </p>
+                <div class="grid grid-cols-2 gap-2">
+                    {
+                        bracelets.map((x, i) => (
+                            <Composant {...x} checked={choisi(bracelets, i)} />
+                        ))
+                    }
+                </div>
+                <p
+                    class="description border-l-2 border-primary/40 pl-3 text-sm text-base-content/70"
+                    data-groupe="bracelet"
+                >
+                </p>
+            </div>
+
+            <!-- 4. Finitions -->
+            <div data-etape="3" class="hidden space-y-5">
+                <h3 class="text-2xl">Les finitions</h3>
+                <p class="text-sm text-base-content/70">
+                    Choisissez la teinte de l'écran, puis enregistrez ou
+                    commandez votre création.
+                </p>
+                <fieldset class="space-y-2">
+                    <legend
+                        class="mb-1 text-xs uppercase tracking-widest text-base-content/60"
+                        >Teinte de l'écran</legend
+                    >
+                    <div class="grid grid-cols-3 gap-2">
+                        {
+                            ECRANS.map((e, i) => (
+                                <label class="relative block cursor-pointer">
+                                    <input
+                                        type="radio"
+                                        name="ecran"
+                                        class="ecran-choix peer sr-only"
+                                        checked={i === ecranCoche}
+                                        data-groupe="ecran"
+                                        data-couleur={e.hex}
+                                        data-couleur-nom={e.nom.toLowerCase()}
+                                        data-description={e.description}
+                                    />
+                                    <div class="carte flex items-center gap-2 rounded-box border border-base-300 bg-base-100 p-3 transition">
+                                        <span
+                                            class="h-6 w-6 shrink-0 rounded-full border border-base-content/20"
+                                            style={`background:${e.hex}`}
+                                        />
+                                        <span class="flex min-w-0 flex-1 flex-col">
+                                            <span class="whitespace-nowrap text-sm font-medium leading-tight">
+                                                {e.nom}
+                                            </span>
+                                            <span class="flex items-baseline justify-between gap-2 text-xs">
+                                                <span class="text-base-content/60">
+                                                    {e.finition}
+                                                </span>
+                                                <span>Inclus</span>
+                                            </span>
+                                        </span>
+                                    </div>
+                                </label>
+                            ))
+                        }
+                    </div>
+                    <p
+                        class="description border-l-2 border-primary/40 pl-3 text-sm text-base-content/70"
+                        data-groupe="ecran"
+                    >
+                    </p>
+                </fieldset>
+
+                <div class="space-y-2">
+                    <label
+                        for="nom"
+                        class="block text-xs uppercase tracking-widest text-base-content/60"
+                        >Nommez votre montre</label
+                    >
+                    <input
+                        id="nom"
+                        name="nom"
+                        type="text"
+                        maxlength="30"
+                        value={nom || "Ma TiK•TaK"}
+                        class="input input-bordered w-full"
+                    />
+                    <p
+                        class="flex flex-wrap items-center gap-2 text-xs text-base-content/70"
+                    >
+                        Idées :
+                        {
+                            [
+                                "Nuit parisienne",
+                                "Minuit à Paris",
+                                "Ma signature",
+                            ].map((idee) => (
+                                <button
+                                    type="button"
+                                    class="idee rounded-full border border-base-300 bg-base-100 px-3 py-1 text-xs text-base-content"
+                                >
+                                    {idee}
+                                </button>
+                            ))
+                        }
+                    </p>
+                </div>
+            </div>
+
+            <!-- Couleurs envoyées à l'enregistrement -->
+            {
+                (
+                    [
+                        "bracelet",
+                        "exterieur",
+                        "interieur",
+                        "ecran",
+                        "texte",
+                    ] as const
+                ).map((cle) => (
+                    <input type="hidden" data-partie={cle} value={c[cle]} />
+                ))
+            }
+
+            <div class="mt-6 flex gap-3">
+                <button
+                    id="precedent"
+                    type="button"
+                    class="btn btn-outline hidden flex-1">Précédent</button
+                >
+                <button
+                    id="suivant"
+                    type="button"
+                    class="btn btn-secondary flex-[1.4]"></button>
+                <button
+                    id="final"
+                    type="submit"
+                    class="btn btn-secondary hidden flex-[1.4]"
+                    data-action="enregistrer"
+                >
+                    {
+                        modifier
+                            ? "Enregistrer les modifications"
+                            : "Enregistrer ma création"
+                    }
+                </button>
+            </div>
+        </section>
+
+        <!-- Récapitulatif -->
+        <section class="rounded-box border border-base-300 bg-base-100 p-5">
+            <ul id="recap" class="space-y-1.5 text-sm"></ul>
+            <p
+                class="mt-4 flex items-baseline justify-between border-t border-base-300 pt-4"
+            >
+                <span class="text-xs uppercase tracking-widest">Total</span>
+                <span id="prix-total" class="font-serif text-3xl">—</span>
+            </p>
+            <p id="message" class="mt-3 hidden text-sm"></p>
+            <button
+                id="commander"
+                type="submit"
+                class="btn btn-primary mt-4 w-full"
+                data-action="commander"
+            >
+                Commander ma montre
+            </button>
+            <p
+                class="mt-3 flex items-center gap-2 text-xs text-base-content/70"
+            >
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                >
+                    <path d="M3 7h11v9H3z"></path><path d="M14 10h4l3 3v3h-7"
+                    ></path><circle cx="7" cy="17.5" r="1.5"></circle><circle
+                        cx="17"
+                        cy="17.5"
+                        r="1.5"></circle>
+                </svg>
+                Livraison offerte sur toutes les commandes
+            </p>
+        </section>
+    </div>
+</form>
+
+<style>
+    .ecran-choix:checked + .carte {
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 1px var(--color-primary);
+    }
+    .ecran-choix:focus-visible + .carte {
+        outline: 2px solid var(--color-primary);
+        outline-offset: 2px;
+    }
+</style>
+
+<script>
+    const PARTIES: Record<string, string[]> = {
+        bracelet: [".bracelet-haut", ".bracelet-bas", ".bracelet-centre"],
+        exterieur: [".boitier-exterieur", ".rond-anneau-ext-fond"],
+        interieur: [".boitier-interieur", ".rond-anneau-int-fond"],
+        ecran: [".boitier-ecran", ".rond-ecran"],
+        texte: [".ecran-heure", ".ecran-date", ".ecran-titre"],
+    };
+    // Quelle partie de la montre recolore chaque groupe de composants
+    const CIBLES: Record<string, string> = {
+        ecran: "ecran",
+        "boitier-exterieur": "exterieur",
+        "boitier-interieur": "interieur",
+        bracelet: "bracelet",
+    };
+    const ETAPES = ["Cadran", "Boîtier", "Bracelet", "Finitions"];
+    const form = document.querySelector<HTMLFormElement>("#configurateur")!;
+    const vues = form.querySelectorAll<HTMLElement>("[data-vue]");
+    const message = form.querySelector<HTMLElement>("#message")!;
+    const radios = () => [
+        ...form.querySelectorAll<HTMLInputElement>("input.composant"),
+    ];
+    const choisis = () => radios().filter((i) => i.checked);
+    const choisisTous = () => radios();
+    const ecrans = () => [
+        ...form.querySelectorAll<HTMLInputElement>("input.ecran-choix"),
+    ];
+    const tout = () => [...radios(), ...ecrans()];
+    const creation = form.dataset.mode !== "modifier";
+    let ecranPerso = form.dataset.ecranPerso === "1";
+    let etape = 0;
+
+    // ---------- Montre ----------
+    function formeActuelle(): string {
+        const cadran = choisis().find((i) => i.dataset.groupe === "cadran");
+        const libelle = (cadran?.dataset.libelle ?? "")
+            .normalize("NFD")
+            .replace(/[̀-ͯ]/g, "");
+        if (libelle.includes("coussin")) return "coussin";
+        if (libelle.includes("carr")) return "carre";
+        if (libelle.includes("rond")) return "rond";
+        return form.dataset.forme ?? "rond";
+    }
+
+    function montrerForme() {
+        const forme = formeActuelle();
+        form.dataset.forme = forme;
+        vues.forEach((v) =>
+            v.classList.toggle("hidden", v.dataset.vue !== forme),
+        );
+    }
+
+    function colorier(partie: string, couleur: string) {
+        // On colorie les 3 montres pour que le changement de forme garde les couleurs
+        for (const sel of PARTIES[partie] ?? []) {
+            form.querySelectorAll(sel).forEach((el) =>
+                el.setAttribute("fill", couleur),
+            );
+        }
+        const input = form.querySelector<HTMLInputElement>(
+            `input[data-partie="${partie}"]`,
+        );
+        if (input) input.value = couleur;
+    }
+
+    // Texte clair sur écran sombre, texte foncé sur écran clair
+    function contraste(hex: string): string {
+        const n = parseInt(hex.slice(1), 16);
+        const luminance =
+            (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) /
+            255;
+        return luminance < 0.5 ? "#f5f1e8" : "#2b2320";
+    }
+
+    function appliquer(i: HTMLInputElement) {
+        const cible = CIBLES[i.dataset.groupe ?? ""];
+        if (!cible || !i.dataset.couleur) return;
+        colorier(cible, i.dataset.couleur);
+        if (cible === "ecran") {
+            colorier("texte", contraste(i.dataset.couleur));
+            ecranPerso = false;
+        }
+    }
+
+    // Petite phrase sous chaque groupe d'options, selon l'option cochée
+    function majDescriptions() {
+        form.querySelectorAll<HTMLElement>(".description").forEach((p) => {
+            const coche = tout().find(
+                (i) => i.checked && i.dataset.groupe === p.dataset.groupe,
+            );
+            p.textContent = coche?.dataset.description ?? "";
+            p.classList.toggle("hidden", !p.textContent);
+        });
+    }
+
+    // ---------- Récapitulatif et prix ----------
+    const majuscule = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+    const euro = (n: number) =>
+        n.toLocaleString("fr-FR", {
+            style: "currency",
+            currency: "EUR",
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 2,
+        });
+
+    function mettreAJourRecap(): number {
+        const lignes: [string, number | null][] = choisis().map((i) => {
+            const g = i.dataset.groupe;
+            const detail =
+                g === "bracelet"
+                    ? `${i.dataset.materiau} ${i.dataset.couleurNom}`
+                    : i.dataset.materiau;
+            return [
+                `${majuscule(i.dataset.libelle ?? "")} · ${detail}`,
+                Number(i.dataset.prix ?? 0),
+            ];
+        });
+        const ecran = ecrans().find((i) => i.checked);
+        if (ecran) lignes.push([`Écran · ${ecran.dataset.couleurNom}`, null]);
+        else if (ecranPerso) lignes.push(["Écran · personnalisé", null]);
+
+        const ul = form.querySelector("#recap")!;
+        ul.innerHTML = "";
+        for (const [texte, prix] of lignes) {
+            const li = document.createElement("li");
+            li.className = "flex justify-between gap-3";
+            const a = document.createElement("span");
+            a.className = "text-base-content/70";
+            a.textContent = texte;
+            const b = document.createElement("span");
+            b.textContent = prix ? euro(prix) : "Inclus";
+            li.append(a, b);
+            ul.append(li);
+        }
+        const total = choisis().reduce(
+            (s, i) => s + Number(i.dataset.prix ?? 0),
+            0,
+        );
+        form.querySelector("#prix-total")!.textContent = euro(total);
+        return total;
+    }
+
+    // ---------- Étapes ----------
+    function afficherEtape(n: number) {
+        etape = Math.max(0, Math.min(ETAPES.length - 1, n));
+        form.querySelectorAll<HTMLElement>("[data-etape]").forEach((el) =>
+            el.classList.toggle("hidden", Number(el.dataset.etape) !== etape),
+        );
+        form.querySelectorAll<HTMLElement>(".onglet").forEach((el) => {
+            const i = Number(el.dataset.onglet);
+            el.classList.toggle("border-primary", i <= etape);
+            el.classList.toggle("border-base-300", i > etape);
+            el.classList.toggle("font-medium", i === etape);
+            el.classList.toggle("text-base-content/60", i !== etape);
+        });
+        form.querySelector("#etape-titre")!.textContent =
+            `Étape ${etape + 1}/${ETAPES.length} : ${ETAPES[etape]}`;
+        const suivant = form.querySelector<HTMLButtonElement>("#suivant")!;
+        suivant.classList.toggle("hidden", etape === ETAPES.length - 1);
+        suivant.textContent = `Suivant : ${ETAPES[etape + 1] ?? ""}`;
+        form.querySelector("#precedent")!.classList.toggle(
+            "hidden",
+            etape === 0,
+        );
+        form.querySelector("#final")!.classList.toggle(
+            "hidden",
+            etape !== ETAPES.length - 1,
+        );
+    }
+    form.querySelectorAll<HTMLElement>(".onglet").forEach((el) =>
+        el.addEventListener("click", () =>
+            afficherEtape(Number(el.dataset.onglet)),
+        ),
+    );
+    form.querySelector("#suivant")!.addEventListener("click", () =>
+        afficherEtape(etape + 1),
+    );
+    form.querySelector("#precedent")!.addEventListener("click", () =>
+        afficherEtape(etape - 1),
+    );
+
+    // ---------- Choix de composants et couleurs ----------
+    tout().forEach((i) =>
+        i.addEventListener("change", () => {
+            appliquer(i);
+            montrerForme();
+            mettreAJourRecap();
+            majDescriptions();
+        }),
+    );
+
+    // Nom de la création : le titre de l'aperçu suit le champ
+    const champNom = form.querySelector<HTMLInputElement>("#nom")!;
+    const titreNom = form.querySelector<HTMLElement>("#titre-nom")!;
+    champNom.addEventListener(
+        "input",
+        () => (titreNom.textContent = champNom.value.trim() || "Ma TiK•TaK"),
+    );
+    form.querySelectorAll<HTMLElement>(".idee").forEach((b) =>
+        b.addEventListener("click", () => {
+            champNom.value = b.textContent!.trim();
+            champNom.dispatchEvent(new Event("input"));
+        }),
+    );
+
+    function couleursActuelles(): Record<string, string> {
+        return Object.fromEntries(
+            [
+                ...form.querySelectorAll<HTMLInputElement>(
+                    "input[data-partie]",
+                ),
+            ].map((i) => [i.dataset.partie!, i.value]),
+        );
+    }
+
+    // ---------- Assistant IA ----------
+    const chat = form.querySelector<HTMLElement>("#chat")!;
+    const boutonIA = form.querySelector<HTMLButtonElement>("#ia")!;
+    const champIA = form.querySelector<HTMLInputElement>("#prompt")!;
+
+    function bulle(texte: string, utilisateur = false) {
+        const p = document.createElement("p");
+        p.className = utilisateur
+            ? "ml-auto max-w-[85%] rounded-box bg-primary px-3 py-2 text-primary-content"
+            : "max-w-[85%] rounded-box bg-base-200 px-3 py-2";
+        p.textContent = texte;
+        chat.append(p);
+    }
+
+    async function generer(prompt: string) {
+        if (!prompt) return;
+        bulle(prompt, true);
+        champIA.value = "";
+        boutonIA.disabled = true;
+        try {
+            const reponse = await fetch("/api/generateColors", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                // configuration : les couleurs actuelles, pour que l'IA ne change que ce qui est demandé
+                body: JSON.stringify({
+                    message: prompt,
+                    configuration: {
+                        ...couleursActuelles(),
+                        forme: formeActuelle(),
+                    },
+                }),
+            });
+            if (!reponse.ok) throw new Error();
+            const donnees = await reponse.json();
+            const couleurs = donnees.couleurs ?? {};
+            const forme: string | null = donnees.forme ?? null;
+            if (Object.keys(couleurs).length === 0 && !forme) {
+                bulle("Je n'ai pas bien compris, pouvez-vous reformuler ?");
+                return;
+            }
+            // Forme du cadran : on coche le cadran correspondant (comme si l'utilisateur avait cliqué dessus)
+            if (forme && forme !== formeActuelle()) {
+                const cadran = choisisTous().find(
+                    (i) =>
+                        i.dataset.groupe === "cadran" &&
+                        (i.dataset.libelle ?? "")
+                            .normalize("NFD")
+                            .replace(/[\u0300-\u036f]/g, "")
+                            .includes(forme),
+                );
+                if (cadran) {
+                    cadran.checked = true;
+                    cadran.dispatchEvent(new Event("change"));
+                }
+            }
+            for (const partie of Object.keys(PARTIES)) {
+                if (typeof couleurs[partie] === "string")
+                    colorier(partie, couleurs[partie]);
+            }
+            if (typeof couleurs.ecran === "string") {
+                ecrans().forEach((i) => (i.checked = false));
+                ecranPerso = true;
+                mettreAJourRecap();
+                majDescriptions();
+            }
+            bulle(
+                donnees.message ??
+                    "C'est fait : j'ai appliqué les couleurs à votre montre.",
+            );
+        } catch {
+            bulle("Je n'ai pas réussi à composer votre montre, réessayez.");
+        } finally {
+            boutonIA.disabled = false;
+        }
+    }
+    boutonIA.addEventListener("click", () => generer(champIA.value.trim()));
+    champIA.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            generer(champIA.value.trim());
+        }
+    });
+    form.querySelectorAll<HTMLElement>(".suggestion").forEach((b) =>
+        b.addEventListener("click", () => generer(b.textContent!.trim())),
+    );
+
+    // ---------- Enregistrement ----------
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const bouton = (e as SubmitEvent).submitter as HTMLButtonElement | null;
+        const commander = bouton?.dataset.action === "commander";
+        const modifier = !creation;
+        const id = form.dataset.idMontre;
+        const svg = form.querySelector<HTMLElement>(
+            "[data-vue]:not(.hidden) svg",
+        )!.outerHTML;
+        const couleurs = couleursActuelles();
+        const corps = {
+            nom: champNom.value.trim() || "Ma TiK•TaK",
+            forme: formeActuelle(),
+            prix: mettreAJourRecap(),
+            composants: choisis().map((i) => Number(i.value)),
+            couleurs,
+            svg,
+        };
+
+        form.querySelectorAll<HTMLButtonElement>("button[type=submit]").forEach(
+            (b) => (b.disabled = true),
+        );
+        try {
+            const reponse = await fetch(
+                modifier ? `/api/montres/${id}` : "/api/montres",
+                {
+                    method: modifier ? "PUT" : "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(corps),
+                },
+            );
+            if (reponse.status === 401) {
+                // Non connecté : on garde la création de côté pour la retrouver après la connexion
+                try {
+                    sessionStorage.setItem(
+                        "brouillon-montre",
+                        JSON.stringify({ ...corps, svg: undefined, commander }),
+                    );
+                } catch {}
+                window.location.href = "/login?redirect=/configurateur";
+                return;
+            }
+            if (!reponse.ok) throw new Error();
+            const { id_montre } = await reponse
+                .json()
+                .catch(() => ({ id_montre: id }));
+            window.location.href = commander
+                ? `/panier?ajouter=${id_montre}`
+                : "/montres";
+        } catch {
+            message.textContent = "L'enregistrement a échoué, réessaie.";
+            message.classList.remove("hidden");
+            message.classList.add("text-error");
+            form.querySelectorAll<HTMLButtonElement>(
+                "button[type=submit]",
+            ).forEach((b) => (b.disabled = false));
+        }
+    });
+
+    // ---------- Démarrage ----------
+    // En création, l'aperçu reflète les options cochées par défaut ; en modification, on garde les couleurs enregistrées.
+    if (creation)
+        tout()
+            .filter((i) => i.checked)
+            .forEach(appliquer);
+
+    // Après une connexion : on retrouve la création commencée avant d'être renvoyé vers /login
+    if (creation) {
+        try {
+            const brouillon = JSON.parse(
+                sessionStorage.getItem("brouillon-montre") ?? "null",
+            );
+            sessionStorage.removeItem("brouillon-montre");
+            if (brouillon) {
+                const ids: number[] = brouillon.composants ?? [];
+                radios().forEach(
+                    (i) => (i.checked = ids.includes(Number(i.value))),
+                );
+                radios()
+                    .filter((i) => i.checked)
+                    .forEach(appliquer);
+                for (const [partie, couleur] of Object.entries<string>(
+                    brouillon.couleurs ?? {},
+                ))
+                    colorier(partie, couleur);
+                const ecran = ecrans().find(
+                    (i) =>
+                        i.dataset.couleur?.toLowerCase() ===
+                        brouillon.couleurs?.ecran?.toLowerCase(),
+                );
+                ecrans().forEach((i) => (i.checked = i === ecran));
+                ecranPerso = !ecran;
+                if (brouillon.nom) {
+                    champNom.value = brouillon.nom;
+                    titreNom.textContent = brouillon.nom;
+                }
+            }
+        } catch {}
+    }
+
+    montrerForme();
+    mettreAJourRecap();
+    majDescriptions();
+    afficherEtape(0);
+</script>

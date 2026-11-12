@@ -1,0 +1,193 @@
+---
+export const prerender = false;
+import Layout from "../layouts/Layout.astro";
+import LigneCommande from "../components/LigneCommande.astro";
+import db from "../lib/db";
+import {
+  lirePanier,
+  lireAdresse,
+  lignesDuPanier,
+  totalDe,
+  passerCommande,
+} from "../lib/commande";
+import { prixEuro } from "../lib/format";
+
+const user = Astro.locals.user!;
+let panier = lirePanier(Astro.cookies.get("panier")?.value);
+const enregistrer = () =>
+  Astro.cookies.set("panier", JSON.stringify(panier), {
+    path: "/",
+    httpOnly: true,
+    sameSite: "lax",
+    maxAge: 60 * 60 * 24 * 30,
+  });
+
+// /panier?ajouter=3 : ajoute la montre (seulement si elle t'appartient), puis revient sur /panier
+const ajouter = Number(Astro.url.searchParams.get("ajouter"));
+if (ajouter) {
+  const montre = db
+    .prepare("SELECT id_montre FROM MONTRE WHERE id_montre = ? AND user_id = ?")
+    .get(ajouter, user.id);
+  if (montre && !panier[ajouter]) {
+    panier[ajouter] = 1;
+    enregistrer();
+  }
+  return Astro.redirect("/panier");
+}
+
+let erreur = "";
+if (Astro.request.method === "POST") {
+  const form = await Astro.request.formData();
+  const action = String(form.get("action") ?? "");
+
+  if (action === "maj") {
+    // Quantités modifiées, ou montre retirée
+    const retirer = Number(form.get("retirer"));
+    for (const id of Object.keys(panier).map(Number)) {
+      if (id === retirer) delete panier[id];
+      else {
+        const q = Math.floor(Number(form.get(`quantite-${id}`)));
+        if (q >= 1) panier[id] = Math.min(q, 9);
+      }
+    }
+    enregistrer();
+    return Astro.redirect("/panier");
+  }
+
+  if (action === "commander") {
+    const adresse = lireAdresse(form);
+    if (!adresse)
+      erreur =
+        "Vérifiez l'adresse : numéro, rue, code postal à 5 chiffres et ville sont obligatoires.";
+    else {
+      const id = passerCommande(user.id, adresse, panier);
+      if (id) {
+        Astro.cookies.delete("panier", { path: "/" });
+        return Astro.redirect(`/profil?section=commandes&ok=${id}`);
+      }
+      erreur = "Votre panier est vide.";
+    }
+  }
+}
+
+const lignes = lignesDuPanier(user.id, panier);
+const total = totalDe(lignes);
+---
+
+<Layout noindex>
+  <div class="mx-auto max-w-5xl px-6 py-12">
+    <h1 class="mb-8 text-4xl">Mon panier</h1>
+
+    {
+      lignes.length === 0 ? (
+        <p>
+          Votre panier est vide.{" "}
+          <a href="/configurateur" class="link link-primary">
+            Créer une montre
+          </a>{" "}
+          ou{" "}
+          <a href="/montres" class="link link-primary">
+            retrouver mes créations
+          </a>
+          .
+        </p>
+      ) : (
+        <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_24rem]">
+          <form
+            id="form-panier"
+            method="post"
+            class="divide-y divide-base-300 border-y border-base-300"
+          >
+            <input type="hidden" name="action" value="maj" />
+            <input type="hidden" name="retirer" value="" />
+            {lignes.map((l) => (
+              <LigneCommande {...l} modifiable />
+            ))}
+          </form>
+
+          <form
+            method="post"
+            class="space-y-4 rounded-box border border-base-300 bg-base-100 p-5"
+          >
+            <input type="hidden" name="action" value="commander" />
+            <h2 class="font-sans text-sm font-medium uppercase tracking-widest">
+              Livraison
+            </h2>
+            <div class="grid grid-cols-3 gap-2">
+              <input
+                name="num_voie"
+                placeholder="N°"
+                maxlength="10"
+                required
+                class="input input-bordered w-full"
+              />
+              <input
+                name="nom_rue"
+                placeholder="Rue"
+                maxlength="50"
+                required
+                class="input input-bordered col-span-2 w-full"
+              />
+              <input
+                name="code_postal"
+                placeholder="Code postal"
+                inputmode="numeric"
+                pattern="\d{5}"
+                maxlength="5"
+                required
+                class="input input-bordered w-full"
+              />
+              <input
+                name="ville"
+                placeholder="Ville"
+                maxlength="50"
+                required
+                class="input input-bordered col-span-2 w-full"
+              />
+            </div>
+
+            <div class="space-y-1 border-t border-base-300 pt-4 text-sm">
+              <p class="flex justify-between">
+                <>
+                  <span>Sous-total</span>
+                  <span>{prixEuro(total)}</span>
+                </>
+              </p>
+              <p class="flex justify-between">
+                <>
+                  <span>Livraison</span>
+                  <span>Offerte</span>
+                </>
+              </p>
+              <p class="flex items-baseline justify-between pt-2">
+                <span class="text-xs uppercase tracking-widest">Total</span>
+                <span class="font-serif text-3xl">{prixEuro(total)}</span>
+              </p>
+            </div>
+
+            {erreur && <p class="text-sm text-error">{erreur}</p>}
+            <button type="submit" class="btn btn-primary w-full">
+              Valider ma commande
+            </button>
+          </form>
+        </div>
+      )
+    }
+  </div>
+</Layout>
+
+<script>
+  // Quantité modifiée ou montre retirée : on renvoie le formulaire du panier
+  const form = document.querySelector<HTMLFormElement>("#form-panier");
+  form
+    ?.querySelectorAll<HTMLInputElement>("input.quantite")
+    .forEach((i) => i.addEventListener("change", () => form.submit()));
+  form?.querySelectorAll<HTMLButtonElement>("button.retirer").forEach((b) =>
+    b.addEventListener("click", () => {
+      form.elements
+        .namedItem("retirer")!
+        .setAttribute("value", b.dataset.idMontre ?? "");
+      form.submit();
+    }),
+  );
+</script>

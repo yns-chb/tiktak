@@ -1,0 +1,54 @@
+---
+import "@fontsource/jost/300.css";
+import "@fontsource/jost/400.css";
+import "@fontsource/jost/500.css";
+import "@fontsource/cormorant-garamond/300.css";
+import "@fontsource/cormorant-garamond/400.css";
+import "../styles/global.css";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+
+interface Props {
+	title?: string;
+	description?: string;
+	noindex?: boolean; // pages privées (compte, panier) : à ne pas référencer
+}
+
+const {
+	title = "TiK•TaK",
+	description = "Créez votre montre connectée sur mesure : cadran, boîtier, bracelet et couleurs. Fabrication française.",
+	noindex = false,
+} = Astro.props;
+
+const titreComplet = title === "TiK•TaK" ? title : `${title} · TiK•TaK`;
+---
+
+<!doctype html>
+<html lang="fr" data-theme="tiktak">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" href="/favicon.ico" />
+		<meta name="generator" content={Astro.generator} />
+		<title>{titreComplet}</title>
+		<meta name="description" content={description} />
+		{noindex && <meta name="robots" content="noindex, nofollow" />}
+
+		<!-- Aperçu lors d'un partage de lien -->
+		<meta property="og:site_name" content="TiK•TaK" />
+		<meta property="og:type" content="website" />
+		<meta property="og:locale" content="fr_FR" />
+		<meta property="og:title" content={titreComplet} />
+		<meta property="og:description" content={description} />
+	</head>
+	<body
+		class="flex min-h-screen flex-col bg-base-100 font-sans text-base-content"
+	>
+		<Header />
+		<main class="flex-1">
+			<slot />
+		</main>
+		<Footer />
+	</body>
+</html>

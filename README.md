@@ -1,0 +1,4 @@
+- Nom: Chouhib-Forster
+- Prénom: Yanis 
+- URL:  https://tiktak.yanischouhib.fr
+- Base de données SQLite sur le VPS: /var/www/tiktak/data/bdd.sqlite

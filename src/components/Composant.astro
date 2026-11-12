@@ -1,0 +1,131 @@
+---
+import { prixEuro } from "../lib/format";
+
+// Les propriétés reprennent les colonnes de la table COMPOSANT : <Composant {...composant} />
+interface Props {
+  id_composant: number;
+  libelle: string; // "cadran coussin", "boîtier extérieur", "bracelet"...
+  materiau: string;
+  couleur: string; // nom ("bleu nuit") ou code hexadécimal : sert à recolorier la montre, pas toujours affiché
+  prix: number;
+  finition?: string | null; // ex. "Argent brossé" (boîtiers)
+  description?: string | null; // petite phrase affichée sous le groupe d'options
+  // Un seul composant choisi par groupe. Par défaut : déduit du libellé.
+  groupe?: string;
+  checked?: boolean;
+}
+
+const {
+  id_composant,
+  libelle,
+  materiau,
+  couleur,
+  prix,
+  finition,
+  description,
+  checked = false,
+} = Astro.props;
+
+const norm = (s: string) =>
+  s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+const l = norm(libelle);
+const groupe =
+  Astro.props.groupe ??
+  (l.startsWith("cadran")
+    ? "cadran"
+    : l.includes("boitier")
+      ? l.includes("int")
+        ? "boitier-interieur"
+        : "boitier-exterieur"
+      : l);
+
+const majuscule = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+// Ce qu'on affiche selon le type de composant
+//  - cadran   : rond de sélection, la forme puis le matériau   (Coussin / Verre saphir)
+//  - boîtier  : pastille de couleur, le matériau puis la finition (Acier / Argent brossé)
+//  - bracelet : pastille de couleur, le matériau puis la couleur  (Cuir / Camel)
+const estCadran = l.startsWith("cadran");
+let titre = majuscule(materiau);
+let sousTitre: string | null = couleur.startsWith("#")
+  ? null
+  : majuscule(couleur);
+if (estCadran) {
+  titre = majuscule(libelle.replace(/^cadran\s*/i, ""));
+  sousTitre = majuscule(materiau);
+} else if (l.includes("boitier")) {
+  sousTitre = finition ?? sousTitre;
+}
+
+// Code hexadécimal de chaque couleur de la base (le script s'en sert pour recolorier le SVG)
+const COULEURS: Record<string, string> = {
+  noir: "#1f1f1f",
+  blanc: "#e9e6e0",
+  camel: "#9c6236",
+  argent: "#c5c8cd",
+  gris: "#5f6369",
+  or: "#c4a462",
+  "bleu nuit": "#1e3350",
+  ivoire: "#f2efe8",
+};
+const hex = couleur.startsWith("#")
+  ? couleur
+  : (COULEURS[couleur.toLowerCase()] ?? "#cccccc");
+---
+
+<label class="relative block cursor-pointer">
+  <input
+    type="radio"
+    name={groupe}
+    value={id_composant}
+    checked={checked}
+    class="composant peer sr-only"
+    data-id-composant={id_composant}
+    data-groupe={groupe}
+    data-libelle={libelle}
+    data-materiau={materiau}
+    data-couleur={hex}
+    data-couleur-nom={couleur}
+    data-prix={prix}
+    data-description={description ?? ""}
+  />
+  <div
+    class="carte flex items-center gap-3 rounded-box border border-base-300 bg-base-100 p-3 transition"
+  >
+    {
+      estCadran ? (
+        <span class="radio h-4 w-4 shrink-0 rounded-full border border-base-content/40 bg-base-100" />
+      ) : (
+        <span
+          class="h-7 w-7 shrink-0 rounded-full border border-base-content/20"
+          style={`background:${hex}`}
+        />
+      )
+    }
+    <span class="flex min-w-0 flex-1 flex-col">
+      <span class="text-sm font-medium leading-tight">{titre}</span>
+      {
+        sousTitre && (
+          <span class="text-xs text-base-content/60">{sousTitre}</span>
+        )
+      }
+    </span>
+    <span class="text-sm">{prix ? prixEuro(prix) : "Inclus"}</span>
+  </div>
+</label>
+
+<style>
+  .composant:checked + .carte {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 1px var(--color-primary);
+  }
+  .composant:checked + .carte .radio {
+    border-color: var(--color-primary);
+    background: var(--color-primary);
+    box-shadow: inset 0 0 0 3px var(--color-base-100);
+  }
+  .composant:focus-visible + .carte {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+</style>

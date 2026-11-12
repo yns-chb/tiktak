@@ -1,0 +1,30 @@
+---
+export const prerender = false;
+import Layout from "../layouts/Layout.astro";
+import ConfigurateurMontre from "../components/ConfigurateurMontre.astro";
+import db from "../lib/db";
+import type { Composant } from "../lib/db";
+import { MODELES } from "../lib/modeles";
+
+// Tous les composants proposés (cadrans, boîtiers, bracelets) : accessible sans compte
+const composants = db.prepare("SELECT * FROM COMPOSANT").all() as Composant[];
+
+// /configurateur?modele=nuit-parisienne : on part d'un des modèles de la page d'accueil
+const modele = MODELES.find(
+    (m) => m.slug === Astro.url.searchParams.get("modele"),
+);
+---
+
+<Layout
+    title="Créer ma montre"
+    description="Personnalisez cadran, boîtier, bracelet et couleurs de votre montre connectée, ou laissez l'assistant la composer pour vous."
+>
+    <div class="mx-auto max-w-6xl px-6 py-12">
+        <ConfigurateurMontre
+            composants={composants}
+            nom={modele?.nom}
+            selection={modele?.composants}
+            ecran={modele?.ecran}
+        />
+    </div>
+</Layout>

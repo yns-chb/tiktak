@@ -1,0 +1,86 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout
+	title="Mentions légales"
+	description="Mentions légales du site TiK•TaK."
+>
+	<div class="w-full max-w-4xl px-4 py-10 sm:px-6 sm:py-12 lg:ml-12 lg:px-8 lg:py-20">
+		<header class="mb-10 max-w-2xl sm:mb-12">
+			<p class="mb-3 text-xs uppercase tracking-[0.25em] text-base-content/60">
+				Informations légales
+			</p>
+			<h1 class="mb-5 text-4xl sm:text-5xl lg:text-6xl">Mentions légales</h1>
+			<p class="text-base-content/70">
+				Les informations légales relatives au site TiK•TaK sont présentées
+				ci-dessous.
+			</p>
+		</header>
+
+		<div class="space-y-10">
+			<section class="border-t border-base-300 pt-5">
+				<h2 class="mb-3 font-serif text-3xl font-normal">Éditeur du site</h2>
+				<dl class="grid gap-3 text-sm sm:grid-cols-[12rem_1fr]">
+					<dt class="text-base-content/60">Nom</dt>
+					<dd>Yanis Chouhib-Forster</dd>
+					<dt class="text-base-content/60">Nom du site</dt>
+					<dd>TiK•TaK</dd>
+					<dt class="text-base-content/60">Adresse du site</dt>
+					<dd>
+						<a class="link link-primary" href="https://tiktak.yanischouhib.fr">
+							tiktak.yanischouhib.fr
+						</a>
+					</dd>
+					<dt class="text-base-content/60">Statut</dt>
+					<dd>Projet étudiant</dd>
+				</dl>
+			</section>
+
+			<section class="border-t border-base-300 pt-5">
+				<h2 class="mb-3 font-serif text-3xl font-normal">Hébergement</h2>
+				<p class="max-w-2xl text-sm leading-7 text-base-content/75">
+					Le site est hébergé par <strong class="font-medium text-base-content"
+						>Infomaniak</strong
+					> sur un serveur privé virtuel.
+				</p>
+			</section>
+
+			<section class="border-t border-base-300 pt-5">
+				<h2 class="mb-3 font-serif text-3xl font-normal">Propriété intellectuelle</h2>
+				<p class="max-w-2xl text-sm leading-7 text-base-content/75">
+					L'ensemble des éléments présents sur ce site, notamment les textes,
+					illustrations, interfaces et éléments graphiques, est protégé par
+					les règles applicables en matière de propriété intellectuelle.
+					Toute reproduction ou réutilisation non autorisée est interdite.
+				</p>
+			</section>
+
+			<section class="border-t border-base-300 pt-5">
+				<h2 class="mb-3 font-serif text-3xl font-normal">Données personnelles</h2>
+				<p class="max-w-2xl text-sm leading-7 text-base-content/75">
+					Les données nécessaires à la création d'un compte et au traitement
+					des commandes sont utilisées uniquement pour fournir les services
+					de TiK•TaK. Pour toute demande concernant vos données, veuillez
+					contacter l'éditeur du site.
+				</p>
+			</section>
+
+			<section class="border-t border-base-300 pt-5">
+				<h2 class="mb-3 font-serif text-3xl font-normal">Cookies</h2>
+				<p class="max-w-2xl text-sm leading-7 text-base-content/75">
+					TiK•TaK utilise des cookies nécessaires au fonctionnement du site,
+					notamment pour maintenir la session utilisateur et le panier.
+					Aucun cookie publicitaire n'est utilisé par cette application.
+				</p>
+			</section>
+
+			<section class="border-t border-base-300 pt-5">
+				<h2 class="mb-3 font-serif text-3xl font-normal">Mise à jour</h2>
+				<p class="text-sm text-base-content/75">
+					Dernière mise à jour : {new Date().toLocaleDateString("fr-FR")}.
+				</p>
+			</section>
+		</div>
+	</div>
+</Layout>

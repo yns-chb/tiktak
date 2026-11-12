@@ -1,0 +1,77 @@
+---
+import ConfigurateurMontre from "./ConfigurateurMontre.astro";
+import { dateFr } from "../lib/format";
+
+// Les propriétés reprennent la table MONTRE, plus les composants et les couleurs de la montre à modifier.
+// <ModifierMontre {...montre} composants={tousLesComposants} selection={idsDeLaMontre} />
+interface Props {
+    id_montre: number;
+    nom: string;
+    date_creation: string;
+    forme?: "rond" | "carre" | "coussin";
+    couleurs?: Record<string, string>;
+    // tous les composants proposés (table COMPOSANT)
+    composants: {
+        id_composant: number;
+        libelle: string;
+        materiau: string;
+        couleur: string;
+        prix: number;
+        finition?: string | null;
+        description?: string | null;
+    }[];
+    // id_composant de la montre (table POSSEDE)
+    selection?: number[];
+}
+
+const {
+    id_montre,
+    nom,
+    date_creation,
+    forme,
+    couleurs,
+    composants,
+    selection,
+} = Astro.props;
+---
+
+<section class="space-y-8">
+    <header class="flex flex-wrap items-baseline justify-between gap-3">
+        <div>
+            <h1 class="text-4xl">Modifier « {nom} »</h1>
+            <p class="text-sm text-base-content/60">
+                Créée le {dateFr(date_creation)}
+            </p>
+        </div>
+        <button
+            id="supprimer-montre"
+            type="button"
+            class="btn btn-outline btn-error"
+            data-id-montre={id_montre}
+        >
+            Supprimer
+        </button>
+    </header>
+
+    <ConfigurateurMontre
+        mode="modifier"
+        id_montre={id_montre}
+        nom={nom}
+        forme={forme}
+        couleurs={couleurs}
+        composants={composants}
+        selection={selection}
+    />
+</section>
+
+<script>
+    const bouton =
+        document.querySelector<HTMLButtonElement>("#supprimer-montre");
+    bouton?.addEventListener("click", async () => {
+        if (!confirm("Supprimer cette création définitivement ?")) return;
+        const reponse = await fetch(`/api/montres/${bouton.dataset.idMontre}`, {
+            method: "DELETE",
+        });
+        if (reponse.ok) window.location.href = "/montres";
+    });
+</script>

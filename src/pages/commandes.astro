@@ -1,0 +1,44 @@
+---
+export const prerender = false;
+import Layout from "../layouts/Layout.astro";
+import Commande from "../components/Commande.astro";
+import LigneCommande from "../components/LigneCommande.astro";
+import db from "../lib/db";
+import type { Commande as CommandeRow } from "../lib/db";
+import { totalDe } from "../lib/commande";
+
+// Historique : uniquement les commandes de l'utilisateur connecté
+const commandes = db
+  .prepare("SELECT * FROM COMMANDE WHERE user_id = ? ORDER BY date_commande DESC, id_commande DESC")
+  .all(Astro.locals.user!.id) as CommandeRow[];
+
+const lignesDe = db.prepare(
+  `SELECT MONTRE.id_montre, MONTRE.nom, MONTRE.prix, MONTRE.svg, LIGNE_DE_COMMANDE.quantite
+   FROM LIGNE_DE_COMMANDE, MONTRE
+   WHERE LIGNE_DE_COMMANDE.id_montre = MONTRE.id_montre AND LIGNE_DE_COMMANDE.id_commande = ?`,
+);
+
+const ok = Astro.url.searchParams.get("ok");
+---
+
+<Layout>
+  <div class="mx-auto max-w-5xl px-6 py-12">
+    <h1 class="mb-8 text-4xl">Mes commandes</h1>
+
+    {ok && <p class="mb-8 rounded-box border border-primary bg-base-100 p-4 text-sm">Merci ! Votre commande n° {ok} est enregistrée.</p>}
+    {commandes.length === 0 && <p>Vous n'avez pas encore passé de commande. <a href="/montres" class="link link-primary">Voir mes créations</a></p>}
+
+    <div class="space-y-6">
+      {
+        commandes.map((c) => {
+          const lignes = lignesDe.all(c.id_commande) as { id_montre: number; nom: string; prix: number; svg: string | null; quantite: number }[];
+          return (
+            <Commande {...c} total={totalDe(lignes)}>
+              {lignes.map((l) => <LigneCommande {...l} />)}
+            </Commande>
+          );
+        })
+      }
+    </div>
+  </div>
+</Layout>

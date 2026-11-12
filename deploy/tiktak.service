@@ -1,0 +1,19 @@
+
+[Unit]
+Description=TiK-TaK (Astro SSR + Bun)
+After=network.target
+
+[Service]
+Type=simple
+User=etudiant
+WorkingDirectory=/var/www/tiktak
+EnvironmentFile=/var/www/tiktak/.env
+Environment="PORT=3010"
+Environment="HOST=127.0.0.1"
+Environment="NODE_ENV=production"
+ExecStart=/home/etudiant/.bun/bin/bun /var/www/tiktak/dist/server/entry.mjs
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

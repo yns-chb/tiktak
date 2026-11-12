@@ -1,0 +1,76 @@
+---
+export const prerender = false;
+import Layout from "../../layouts/Layout.astro";
+import Montre from "../../components/Montre.astro";
+import db from "../../lib/db";
+import type { Montre as MontreRow } from "../../lib/db";
+
+// Uniquement les montres de l'utilisateur connecté
+const montres = db
+    .prepare(
+        "SELECT * FROM MONTRE WHERE user_id = ? ORDER BY date_creation DESC",
+    )
+    .all(Astro.locals.user!.id) as MontreRow[];
+
+const composantsDe = db.prepare(
+    `SELECT COMPOSANT.libelle, COMPOSANT.materiau, COMPOSANT.couleur
+   FROM POSSEDE, COMPOSANT
+   WHERE POSSEDE.id_composant = COMPOSANT.id_composant AND POSSEDE.id_montre = ?`,
+);
+const commandee = db.prepare(
+    "SELECT 1 FROM LIGNE_DE_COMMANDE WHERE id_montre = ?",
+);
+---
+
+<Layout>
+    <div class="mx-auto max-w-5xl px-6 py-12">
+        <h1 class="mb-8 text-4xl">Mes créations</h1>
+        {
+            montres.length === 0 && (
+                <p>
+                    Vous n'avez pas encore créé de montre.{" "}
+                    <a href="/configurateur" class="link link-primary">
+                        Créer ma première montre
+                    </a>
+                </p>
+            )
+        }
+        <div class="grid gap-6 sm:grid-cols-2">
+            {
+                montres.map((m) => (
+                    <Montre
+                        {...m}
+                        composants={composantsDe.all(m.id_montre) as any}
+                        statut={
+                            commandee.get(m.id_montre)
+                                ? "Commandée"
+                                : "Enregistrée"
+                        }
+                    />
+                ))
+            }
+        </div>
+    </div>
+</Layout>
+
+<script>
+    // Bouton « supprimer » des cartes
+    document
+        .querySelectorAll<HTMLButtonElement>("button.supprimer")
+        .forEach((b) =>
+            b.addEventListener("click", async () => {
+                if (!confirm("Supprimer cette création définitivement ?"))
+                    return;
+                const reponse = await fetch(
+                    `/api/montres/${b.dataset.idMontre}`,
+                    { method: "DELETE" },
+                );
+                if (reponse.ok) window.location.reload();
+                else
+                    alert(
+                        (await reponse.json().catch(() => ({}))).erreur ??
+                            "Suppression impossible",
+                    );
+            }),
+        );
+</script>

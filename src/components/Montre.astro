@@ -1,0 +1,117 @@
+---
+import MontreRonde from "./MontreRonde.astro";
+import { prixEuro, dateFr } from "../lib/format";
+
+// Les propriétés reprennent les colonnes de la table MONTRE : <Montre {...montre} />
+interface Props {
+  id_montre: number;
+  nom: string;
+  prix: number;
+  date_creation: string;
+  svg?: string | null;
+  // Affichage seulement (pas une colonne de MONTRE)
+  statut?: "Commandée" | "Enregistrée";
+  actions?: boolean;
+  // Composants de la montre (table POSSEDE + COMPOSANT), pour afficher les matériaux
+  composants?: { libelle: string; materiau: string; couleur: string }[];
+}
+
+const {
+  id_montre,
+  nom,
+  prix,
+  date_creation,
+  svg,
+  statut,
+  actions = true,
+  composants = [],
+} = Astro.props;
+---
+
+<article
+  class="card overflow-hidden border border-base-300 bg-base-100"
+  data-id-montre={id_montre}
+>
+  <figure class="relative flex justify-center bg-base-300 px-4 pb-6 pt-4">
+    {
+      statut && (
+        <span
+          class:list={[
+            "badge absolute left-4 top-4 text-xs uppercase tracking-widest",
+            statut === "Commandée"
+              ? "badge-primary"
+              : "border-base-300 bg-base-100",
+          ]}
+        >
+          {statut}
+        </span>
+      )
+    }
+    <div class="w-32 sm:w-40">
+      {svg ? <Fragment set:html={svg} /> : <MontreRonde />}
+    </div>
+  </figure>
+
+  <div class="card-body gap-1.5">
+    <div class="flex items-baseline justify-between gap-3">
+      <h2 class="card-title font-serif text-2xl font-normal">{nom}</h2>
+      <span class="text-lg">{prixEuro(prix)}</span>
+    </div>
+    <p class="text-sm text-base-content/60">Créée le {dateFr(date_creation)}</p>
+
+    {
+      composants.length > 0 && (
+        <ul class="mt-2 space-y-0.5 text-sm">
+          {composants.map((c) => (
+            <li class="flex justify-between gap-3">
+              <span class="capitalize text-base-content/60">{c.libelle}</span>
+              <span class="capitalize">
+                {c.materiau} {c.couleur}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )
+    }
+
+    {
+      actions && (
+        <div class="card-actions mt-3 flex-nowrap">
+          <a href={`/montres/${id_montre}`} class="btn btn-outline flex-1">
+            Modifier
+          </a>
+          <a
+            href={`/panier?ajouter=${id_montre}`}
+            class="btn btn-secondary flex-1"
+          >
+            Ajouter au panier
+          </a>
+          <button
+            type="button"
+            class="supprimer btn btn-outline btn-error btn-square"
+            data-id-montre={id_montre}
+            aria-label={`Supprimer ${nom}`}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <>
+                <path d="M4 7h16" />
+                <path d="M9 7V4h6v3" />
+                <path d="M6 7l1 13h10l1-13" />
+              </>
+            </svg>
+          </button>
+        </div>
+      )
+    }
+  </div>
+</article>

@@ -1,0 +1,161 @@
+---
+// Astro.locals.user est rempli par le middleware (null si personne n'est connecté).
+const user = (Astro.locals as { user?: { name: string } | null }).user ?? null;
+const path = Astro.url.pathname;
+
+const liens = [
+    { href: "/configurateur", label: "Créer" },
+    { href: "/montres", label: "Mes créations" },
+];
+const actif = (href: string) => path === href || path.startsWith(href + "/");
+---
+
+<header class="border-b border-base-300 bg-base-100">
+    <div class="navbar mx-auto max-w-7xl px-4 md:px-8">
+        <!-- Gauche : menu mobile + navigation desktop -->
+        <div class="navbar-start">
+            <details class="dropdown lg:hidden">
+                <summary
+                    class="btn btn-ghost btn-square"
+                    aria-label="Ouvrir le menu"
+                >
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="h-6 w-6"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        aria-hidden="true"
+                    >
+                        <path stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16"
+                        ></path>
+                    </svg>
+                </summary>
+                <ul
+                    class="menu dropdown-content z-10 mt-3 w-56 rounded-box bg-base-100 p-2 shadow"
+                >
+                    {
+                        liens.map((l) => (
+                            <li>
+                                <a
+                                    href={l.href}
+                                    class:list={[
+                                        { "menu-active": actif(l.href) },
+                                    ]}
+                                >
+                                    {l.label}
+                                </a>
+                            </li>
+                        ))
+                    }
+                </ul>
+            </details>
+
+            <ul
+                class="menu menu-horizontal hidden gap-2 text-sm uppercase tracking-widest lg:flex"
+            >
+                {
+                    liens.map((l) => (
+                        <li>
+                            <a
+                                href={l.href}
+                                class:list={[{ "menu-active": actif(l.href) }]}
+                            >
+                                {l.label}
+                            </a>
+                        </li>
+                    ))
+                }
+            </ul>
+        </div>
+
+        <!-- Centre : logo -->
+        <div class="navbar-center">
+            <a
+                href="/"
+                class="font-serif text-xl font-medium tracking-[0.28em] sm:text-2xl"
+                >TiK•TaK</a
+            >
+        </div>
+
+        <!-- Droite : compte et panier -->
+        <div class="navbar-end gap-1">
+            <span class="hidden text-sm text-base-content/60 xl:inline"
+                >Fabrication française</span
+            >
+
+            {
+                user ? (
+                    <a
+                        href="/profil"
+                        class="hidden items-center gap-2 rounded-full bg-neutral/40 px-3 py-1 text-sm md:flex"
+                    >
+                        <span class="h-2 w-2 rounded-full bg-primary" />
+                        {user.name}
+                    </a>
+                ) : null
+            }
+
+            <a
+                href={user ? "/profil" : "/login"}
+                class="btn btn-ghost btn-square"
+                aria-label={user ? "Mon compte" : "Connexion"}
+            >
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-6 w-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                >
+                    <circle cx="12" cy="8" r="4"></circle><path
+                        d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"></path>
+                </svg>
+            </a>
+            <a
+                href="/panier"
+                class="btn btn-ghost btn-square"
+                aria-label="Panier"
+            >
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-6 w-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                >
+                    <path d="M6 8h12l-1 12H7z"></path><path
+                        d="M9 8V6a3 3 0 0 1 6 0v2"></path>
+                </svg>
+            </a>
+
+            {
+                user ? (
+                    <button
+                        id="logout"
+                        class="btn btn-ghost btn-sm hidden sm:inline-flex"
+                    >
+                        Déconnexion
+                    </button>
+                ) : null
+            }
+        </div>
+    </div>
+</header>
+
+<script>
+    import { authClient } from "../lib/auth-client";
+    document.querySelector("#logout")?.addEventListener("click", async () => {
+        await authClient.signOut();
+        window.location.href = "/login";
+    });
+</script>
